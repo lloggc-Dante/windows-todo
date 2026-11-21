@@ -41,6 +41,7 @@ export class WidgetWindowController {
   private window: WidgetWindow | undefined
   private taskCount = 0
   private quitting = false
+  private moveTimer: NodeJS.Timeout | undefined
   private position: WidgetPosition | null = null
 
   constructor(private readonly options: WidgetControllerOptions) {
@@ -70,6 +71,7 @@ export class WidgetWindowController {
       this.window.setBackgroundMaterial('acrylic')
     }
     this.window.on('moved', () => this.persistPosition())
+    this.window.on('move', () => this.schedulePositionPersist())
     this.window.on('close', event => {
       if (this.quitting) return
       event?.preventDefault()
@@ -117,8 +119,18 @@ export class WidgetWindowController {
     if (!this.window?.isVisible()) this.show(this.options.hidden)
   }
 
+  private schedulePositionPersist(): void {
+    if (this.moveTimer) clearTimeout(this.moveTimer)
+    this.moveTimer = setTimeout(() => {
+      this.moveTimer = undefined
+      this.persistPosition()
+    }, 100)
+    this.moveTimer.unref()
+  }
+
   allowQuit(): void {
     this.quitting = true
+    if (this.moveTimer) clearTimeout(this.moveTimer)
   }
 
   clampToDisplays(): void {

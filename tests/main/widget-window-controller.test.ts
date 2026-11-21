@@ -37,9 +37,9 @@ class FakeWindow {
     this.handlers.set(event, handler)
   }
   emit(event: string, payload?: { preventDefault(): void }): void { this.handlers.get(event)?.(payload) }
-  moveTo(x: number, y: number): void {
+  moveTo(x: number, y: number, event = 'moved'): void {
     this.bounds = { ...this.bounds, x, y }
-    this.emit('moved')
+    this.emit(event)
   }
 }
 
@@ -172,5 +172,18 @@ describe('widget review regressions', () => {
     screenHandlers.get(event)?.()
 
     expect(windows[0].bounds).toMatchObject({ x: 1400, y: 780, height: 300 })
+  })
+})
+
+
+describe('continuous native movement', () => {
+  it('persists a debounced move event without waiting for moved', async () => {
+    const { controller, settings, windows } = setup()
+    controller.initialize()
+
+    windows[0].moveTo(340, 220, 'move')
+    await new Promise(resolve => setTimeout(resolve, 160))
+
+    expect(JSON.parse(settings.getSetting('widgetPosition')!)).toMatchObject({ x: 340, y: 220 })
   })
 })
