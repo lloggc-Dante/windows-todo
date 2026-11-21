@@ -110,6 +110,28 @@ export class TaskStore {
     return rows.map(toTask)
   }
 
+  listAllTasks(): Task[] {
+    const rows = this.db.prepare(
+      `SELECT * FROM tasks
+       ORDER BY list_id, completed_at IS NOT NULL, sort_order, completed_at DESC, created_at, id`,
+    ).all() as TaskRow[]
+    return rows.map(toTask)
+  }
+
+  setSetting(key: string, value: string): void {
+    this.db.prepare(`
+      INSERT INTO settings(key, value) VALUES (?, ?)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value
+    `).run(key, value)
+  }
+
+  getSetting(key: string): string | null {
+    const row = this.db.prepare('SELECT value FROM settings WHERE key = ?').get(key) as
+      | { value: string }
+      | undefined
+    return row?.value ?? null
+  }
+
   reorderTasks(listId: string, orderedTaskIds: string[]): Task[] {
     if (new Set(orderedTaskIds).size !== orderedTaskIds.length) {
       throw new Error('任务顺序包含重复任务')

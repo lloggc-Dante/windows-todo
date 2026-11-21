@@ -1,5 +1,7 @@
-import { rrulestr } from 'rrule'
+import rrulePackage from 'rrule'
 import type { Task } from '../shared/tasks'
+
+const { rrulestr } = rrulePackage
 
 export interface Occurrence {
   local: string

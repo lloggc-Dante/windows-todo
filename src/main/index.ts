@@ -1,5 +1,10 @@
-import { app, BrowserWindow, ipcMain, Menu, Tray } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu, powerMonitor, Tray } from 'electron'
+import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
+import { createDatabase } from './db/database'
+import { TaskStore } from './db/task-store'
+import { WindowsNotifier } from './notifier'
+import { ReminderScheduler } from './reminder-scheduler'
 import { createTrayIcon } from './tray-icon'
 import { WindowController } from './window-controller'
 import { WindowsIntegration } from './windows-integration'
@@ -28,6 +33,22 @@ function startApplication(): void {
     return
   }
 
+  const dataDirectory = process.env.WINDOWS_TODO_TEST_DATA_DIR ?? app.getPath('userData')
+  mkdirSync(dataDirectory, { recursive: true })
+  const db = createDatabase(join(dataDirectory, 'tasks.db'))
+  const store = new TaskStore(db)
+  const scheduler = new ReminderScheduler(db, store, new WindowsNotifier(), controller)
+  const checkReminders = (): void => {
+    void scheduler.reconcile(new Date()).then(() => scheduler.reschedule())
+  }
+  powerMonitor.on('resume', checkReminders)
+  const reminderInterval = setInterval(checkReminders, 60_000)
+  app.on('will-quit', () => {
+    clearInterval(reminderInterval)
+    scheduler.stop()
+    db.close()
+  })
+
   const tray = new Tray(createTrayIcon())
   tray.setToolTip('轻待办')
   tray.setContextMenu(Menu.buildFromTemplate([
@@ -48,6 +69,7 @@ function startApplication(): void {
   } else {
     void window.loadFile(join(__dirname, '../renderer/index.html'))
   }
+  void scheduler.reschedule()
 }
 
 app.whenReady().then(() => {
