@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type Database from 'better-sqlite3'
-import type { List, Task, TaskPatch } from '../../shared/tasks'
+import type { List, Task, TaskCompletion, TaskPatch } from '../../shared/tasks'
+import { nextOccurrence } from '../recurrence'
 
 interface ListRow {
   id: string
@@ -196,6 +197,72 @@ export class TaskStore {
 
   deleteTask(id: string): void {
     this.db.prepare('DELETE FROM tasks WHERE id = ?').run(id)
+  }
+
+  completeTask(taskId: string, now: Date): Task | null {
+    const task = this.getTask(taskId)
+    if (task.completedAt) return task
+
+    const completedAt = now.toISOString()
+    const occurrenceKey = task.dueLocal ?? `floating:${task.id}`
+    const next = nextOccurrence(task, now)
+
+    this.db.transaction(() => {
+      this.db.prepare(
+        'INSERT INTO task_completions(id, task_id, occurrence_key, completed_at) VALUES (?, ?, ?, ?)',
+      ).run(randomUUID(), taskId, occurrenceKey, completedAt)
+      this.db.prepare(
+        "UPDATE reminders SET status = 'skipped' WHERE task_id = ? AND occurrence_key = ? AND status = 'pending'",
+      ).run(taskId, occurrenceKey)
+      this.db.prepare(`
+        UPDATE tasks SET due_local = ?, completed_at = ?, updated_at = ? WHERE id = ?
+      `).run(next?.local ?? task.dueLocal, next ? null : completedAt, completedAt, taskId)
+    })()
+    return this.getTask(taskId)
+  }
+
+  undoLatestCompletion(taskId: string): Task {
+    this.getTask(taskId)
+    const completion = this.db.prepare(`
+      SELECT * FROM task_completions WHERE task_id = ?
+      ORDER BY completed_at DESC, rowid DESC LIMIT 1
+    `).get(taskId) as {
+      id: string
+      occurrence_key: string
+    } | undefined
+    if (!completion) throw new Error('没有可撤销的完成记录')
+
+    this.db.transaction(() => {
+      const task = this.getTask(taskId)
+      this.db.prepare('DELETE FROM task_completions WHERE id = ?').run(completion.id)
+      this.db.prepare('DELETE FROM reminders WHERE task_id = ? AND occurrence_key = ?')
+        .run(taskId, completion.occurrence_key)
+      this.db.prepare(`
+        UPDATE tasks SET due_local = ?, completed_at = NULL, updated_at = ? WHERE id = ?
+      `).run(
+        task.recurrenceRule ? completion.occurrence_key : task.dueLocal,
+        new Date().toISOString(),
+        taskId,
+      )
+    })()
+    return this.getTask(taskId)
+  }
+
+  listCompletions(taskId: string): TaskCompletion[] {
+    const rows = this.db.prepare(`
+      SELECT * FROM task_completions WHERE task_id = ? ORDER BY completed_at DESC, rowid DESC
+    `).all(taskId) as Array<{
+      id: string
+      task_id: string
+      occurrence_key: string
+      completed_at: string
+    }>
+    return rows.map(row => ({
+      id: row.id,
+      taskId: row.task_id,
+      occurrenceKey: row.occurrence_key,
+      completedAt: row.completed_at,
+    }))
   }
 
   getTask(id: string): Task {
