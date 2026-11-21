@@ -23,6 +23,24 @@ export const useTasksStore = defineStore('tasks', () => {
     await selectList(lists.value[0].id)
   }
 
+  async function refresh(): Promise<void> {
+    const previousListId = selectedListId.value
+    lists.value = await window.appApi.listLists()
+    if (lists.value.length === 0) {
+      const list = await window.appApi.createList('我的待办')
+      lists.value = [list]
+    }
+    const nextListId: string = previousListId !== null && lists.value.some(list => list.id === previousListId)
+      ? previousListId
+      : lists.value[0].id
+    if (nextListId !== selectedListId.value) {
+      await selectList(nextListId)
+      return
+    }
+    tasks.value = await window.appApi.listTasks(nextListId)
+    if (!tasks.value.some(task => task.id === selectedTaskId.value)) selectedTaskId.value = null
+  }
+
   async function selectList(listId: string): Promise<void> {
     selectedListId.value = listId
     selectedTaskId.value = null
@@ -118,6 +136,7 @@ export const useTasksStore = defineStore('tasks', () => {
     completedTasks,
     selectedTask,
     initialize,
+    refresh,
     selectList,
     addList,
     renameList,

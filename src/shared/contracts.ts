@@ -33,6 +33,9 @@ export interface AppApi {
   setWidgetTaskCount(count: number): Promise<void>
   hideWidget(): Promise<void>
   openMainWindow(): Promise<void>
+  getWidgetSelectedList(): Promise<string | null>
+  setWidgetSelectedList(listId: string): Promise<void>
+  onTasksChanged(callback: () => void): () => void
   onSelectTask(callback: (taskId: string) => void): () => void
 }
 

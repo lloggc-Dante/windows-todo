@@ -39,6 +39,7 @@ export class WidgetWindowController {
   readonly presentation: WidgetPresentation
   private window: WidgetWindow | undefined
   private taskCount = 0
+  private quitting = false
   private position: WidgetPosition | null = null
 
   constructor(private readonly options: WidgetControllerOptions) {
@@ -69,6 +70,7 @@ export class WidgetWindowController {
     }
     this.window.on('moved', () => this.persistPosition())
     this.window.on('close', event => {
+      if (this.quitting) return
       event?.preventDefault()
       this.hide()
     })
@@ -101,6 +103,10 @@ export class WidgetWindowController {
       return
     }
     this.show(this.options.hidden)
+  }
+
+  allowQuit(): void {
+    this.quitting = true
   }
 
   clampToDisplays(): void {

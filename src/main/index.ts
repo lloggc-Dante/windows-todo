@@ -77,7 +77,7 @@ function startApplication(): void {
   integration.setCloseToTray(store.getSetting('closeToTray') !== 'false')
   integration.setAutoStart(store.getSetting('autoStart') === 'true')
   registerTaskIpc(db, store, scheduler, integration, window)
-  registerWidgetIpc(widget, controller)
+  registerWidgetIpc(widget, controller, store)
   const checkReminders = (): void => {
     void scheduler.reconcile(new Date())
       .then(() => scheduler.reschedule())
@@ -100,7 +100,10 @@ function startApplication(): void {
   tray.on('click', () => controller.showMainWindow())
 
   window.on('close', event => integration.handleClose(event))
-  app.on('before-quit', () => integration.allowQuit())
+  app.on('before-quit', () => {
+    integration.allowQuit()
+    widget.allowQuit()
+  })
 
   if (!process.argv.includes('--hidden')) {
     window.once('ready-to-show', () => controller.showMainWindow())

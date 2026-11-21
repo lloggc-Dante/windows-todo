@@ -1,5 +1,6 @@
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import vue from '@vitejs/plugin-vue'
+import { resolve } from 'node:path'
 
 export default defineConfig({
   main: {
@@ -18,5 +19,13 @@ export default defineConfig({
   },
   renderer: {
     plugins: [vue()],
+    build: {
+      rollupOptions: {
+        input: {
+          main: resolve('src/renderer/index.html'),
+          widget: resolve('src/renderer/widget.html'),
+        },
+      },
+    },
   },
 })

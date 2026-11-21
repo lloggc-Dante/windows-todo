@@ -26,6 +26,13 @@ const api: AppApi = {
   setWidgetTaskCount: count => ipcRenderer.invoke('widget:set-task-count', count),
   hideWidget: () => ipcRenderer.invoke('widget:hide'),
   openMainWindow: () => ipcRenderer.invoke('widget:open-main'),
+  getWidgetSelectedList: () => ipcRenderer.invoke('widget:get-selected-list'),
+  setWidgetSelectedList: listId => ipcRenderer.invoke('widget:set-selected-list', listId),
+  onTasksChanged: callback => {
+    const listener = (): void => callback()
+    ipcRenderer.on('tasks:changed', listener)
+    return () => ipcRenderer.removeListener('tasks:changed', listener)
+  },
   onSelectTask: callback => {
     const listener = (_event: IpcRendererEvent, taskId: string): void => callback(taskId)
     ipcRenderer.on('tasks:select', listener)

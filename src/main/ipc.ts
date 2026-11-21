@@ -1,5 +1,4 @@
-import { app, dialog, ipcMain } from 'electron'
-import type { BrowserWindow } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import type Database from 'better-sqlite3'
 import { join } from 'node:path'
 import { exportBackup, previewBackup, replaceFromBackup } from './backup'
@@ -47,24 +46,33 @@ function taskPatch(value: unknown): TaskPatch {
   return patch
 }
 
+function broadcastTasksChanged(): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    window.webContents.send('tasks:changed')
+  }
+}
+
 export function registerTaskIpc(
   db: Database.Database,
   store: TaskStore,
   scheduler: ReminderScheduler,
   integration: WindowsIntegration,
   window: BrowserWindow,
+  broadcast: () => void = broadcastTasksChanged,
 ): void {
   let pendingBackupPath: string | null = null
   const changed = async <T>(operation: () => T): Promise<T> => {
     const result = operation()
+    broadcast()
     await scheduler.reschedule()
     return result
   }
 
   ipcMain.handle('lists:list', () => store.listLists())
-  ipcMain.handle('lists:create', (_event, name) => store.createList(stringValue(name, '清单名称')))
+  ipcMain.handle('lists:create', (_event, name) =>
+    changed(() => store.createList(stringValue(name, '清单名称'))))
   ipcMain.handle('lists:rename', (_event, id, name) =>
-    store.renameList(stringValue(id, '清单ID'), stringValue(name, '清单名称')))
+    changed(() => store.renameList(stringValue(id, '清单ID'), stringValue(name, '清单名称'))))
   ipcMain.handle('lists:delete', (_event, id) =>
     changed(() => store.deleteList(stringValue(id, '清单ID'))))
   ipcMain.handle('tasks:list', (_event, listId) => store.listTasks(stringValue(listId, '清单ID')))
@@ -78,7 +86,7 @@ export function registerTaskIpc(
     if (!Array.isArray(ids) || ids.some(id => typeof id !== 'string')) {
       throw new Error('任务顺序格式无效')
     }
-    return store.reorderTasks(stringValue(listId, '清单ID'), ids)
+    return changed(() => store.reorderTasks(stringValue(listId, '清单ID'), ids))
   })
   ipcMain.handle('tasks:move', (_event, taskId, listId) =>
     changed(() => store.moveTaskToList(
@@ -118,6 +126,7 @@ export function registerTaskIpc(
     pendingBackupPath = null
     integration.setCloseToTray(store.getSetting('closeToTray') !== 'false')
     integration.setAutoStart(store.getSetting('autoStart') === 'true')
+    broadcast()
     await scheduler.reschedule()
   })
 

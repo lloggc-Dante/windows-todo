@@ -19,6 +19,7 @@ const {
   error,
 } = storeToRefs(store)
 let unsubscribe: (() => void) | undefined
+let unsubscribeTasks: (() => void) | undefined
 const settingsOpen = ref(false)
 
 onMounted(async () => {
@@ -30,6 +31,9 @@ onMounted(async () => {
   })
   try {
     await store.initialize()
+    unsubscribeTasks = window.appApi.onTasksChanged(() => {
+      void store.refresh()
+    })
     unsubscribe = window.appApi.onSelectTask(taskId => {
       void store.selectTaskById(taskId)
     })
@@ -38,7 +42,10 @@ onMounted(async () => {
   }
 })
 
-onUnmounted(() => unsubscribe?.())
+onUnmounted(() => {
+  unsubscribe?.()
+  unsubscribeTasks?.()
+})
 </script>
 
 <template>
