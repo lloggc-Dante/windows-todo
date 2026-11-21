@@ -107,7 +107,7 @@ export class WidgetWindowController {
       width,
     }, this.options.screen.getAllDisplays())
     this.window.setBounds(restored)
-    this.persistPosition()
+    this.schedulePositionPersist()
   }
 
   show(inactive = false): void {
@@ -144,6 +144,7 @@ export class WidgetWindowController {
   allowQuit(): void {
     this.quitting = true
     if (this.moveTimer) clearTimeout(this.moveTimer)
+    if (this.window) this.persistPosition()
   }
 
   clampToDisplays(): void {

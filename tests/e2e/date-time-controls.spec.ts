@@ -13,6 +13,11 @@ test('custom calendar and time picker preserve task scheduling fields', async ()
     await page.getByTestId('quick-add-input').press('Enter')
     await page.getByTestId('due-date-input').fill('2026-11-22')
     await page.getByRole('button', { name: '打开日历' }).click()
+    const calendar = page.locator('.date-popover')
+    expect(await calendar.evaluate(element => {
+      const rect = element.getBoundingClientRect()
+      return rect.top >= 0 && rect.bottom <= innerHeight
+    })).toBe(true)
     await page.getByRole('button', { name: '23', exact: true }).click()
     await expect(page.getByTestId('due-date-input')).toHaveValue('2026-11-23')
 

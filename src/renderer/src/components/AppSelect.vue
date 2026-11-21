@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import FloatingPopover from './FloatingPopover.vue'
 
 interface SelectOption {
   value: string
@@ -87,18 +88,20 @@ function keydown(event: KeyboardEvent): void {
     >
       <span>{{ selectedLabel }}</span><span class="app-select-chevron">⌄</span>
     </button>
-    <div v-if="open" class="app-select-popover" role="listbox" :aria-label="ariaLabel">
-      <div
-        v-for="(option, index) in options"
-        :key="option.value"
-        class="app-select-option"
-        :class="{ active: index === activeIndex }"
-        role="option"
-        :aria-selected="option.value === modelValue"
-        @pointerenter="activeIndex = index"
-        @click.stop="choose(option)"
-      >{{ option.label }}</div>
-    </div>
+    <FloatingPopover :open="open" :anchor="trigger" :max-height="240">
+      <div class="app-select-popover" role="listbox" :aria-label="ariaLabel">
+        <div
+          v-for="(option, index) in options"
+          :key="option.value"
+          class="app-select-option"
+          :class="{ active: index === activeIndex }"
+          role="option"
+          :aria-selected="option.value === modelValue"
+          @pointerenter="activeIndex = index"
+          @click.stop="choose(option)"
+        >{{ option.label }}</div>
+      </div>
+    </FloatingPopover>
   </div>
 </template>
 
@@ -123,12 +126,15 @@ function keydown(event: KeyboardEvent): void {
 .app-select-chevron { color: #7283a0; transition: transform .16s; }
 .app-select-trigger[aria-expanded='true'] .app-select-chevron { transform: rotate(180deg); }
 .app-select-popover {
-  position: absolute;
+  position: static;
+  max-height: inherit;
+  overflow-y: auto;
+  -webkit-app-region: no-drag;
   z-index: 60;
   top: calc(100% + 7px);
   left: 0;
   right: 0;
-  max-height: 236px;
+  max-height: inherit;
   overflow-y: auto;
   padding: 6px;
   border: 1px solid rgb(255 255 255 / 78%);

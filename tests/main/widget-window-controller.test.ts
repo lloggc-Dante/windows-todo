@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { resolveWidgetPresentation } from '../../src/shared/widget'
 import type { WidgetPosition } from '../../src/shared/widget'
 import { WidgetWindowController } from '../../src/main/widget-window-controller'
@@ -190,11 +190,25 @@ describe('continuous native movement', () => {
 
 
 describe('widget width persistence', () => {
-  it('clamps and saves a resized width', () => {
+  it('clamps and saves a resized width', async () => {
     const { controller, settings, windows } = setup()
     controller.initialize()
     controller.setWidth(481)
+    await new Promise(resolve => setTimeout(resolve, 160))
     expect(windows[0].bounds.width).toBe(480)
     expect(JSON.parse(settings.getSetting('widgetPosition')!).width).toBe(480)
+  })
+})
+
+
+describe('widget resize write coalescing', () => {
+  it('does not synchronously persist every pointer movement', async () => {
+    const { controller, settings } = setup()
+    controller.initialize()
+    settings.setSetting = vi.fn(settings.setSetting.bind(settings))
+    for (let width = 360; width <= 420; width += 2) controller.setWidth(width)
+    expect(settings.setSetting).not.toHaveBeenCalled()
+    await new Promise(resolve => setTimeout(resolve, 160))
+    expect(settings.setSetting).toHaveBeenCalledTimes(1)
   })
 })

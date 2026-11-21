@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { calendarMonth, validCalendarDate } from '../date-picker'
+import FloatingPopover from './FloatingPopover.vue'
 
 defineOptions({ inheritAttrs: false })
 const props = defineProps<{ modelValue: string }>()
@@ -81,7 +82,8 @@ function clear(): void {
       <button type="button" aria-label="打开日历" @click="open ? open = false : show()">▦</button>
       <button v-if="text" type="button" aria-label="清除日期" @click="clear">×</button>
     </div>
-    <div v-if="open" class="date-popover">
+    <FloatingPopover :open="open" :anchor="root" :max-height="400" :width="282">
+      <div class="date-popover">
       <header><button type="button" aria-label="上个月" @click="moveMonth(-1)">‹</button><strong>{{ year }} 年 {{ month + 1 }} 月</strong><button type="button" aria-label="下个月" @click="moveMonth(1)">›</button></header>
       <div class="weekdays"><span v-for="day in ['一','二','三','四','五','六','日']" :key="day">{{ day }}</span></div>
       <div class="calendar-grid">
@@ -93,7 +95,8 @@ function clear(): void {
           @click="choose(day.date)"
         >{{ Number(day.date.slice(-2)) }}</button>
       </div>
-    </div>
+      </div>
+    </FloatingPopover>
   </div>
 </template>
 
@@ -103,7 +106,7 @@ function clear(): void {
 .date-input-row input { min-width: 0; flex: 1; }
 .date-input-row button, .date-popover button { border: 0; border-radius: 7px; color: #526277; background: rgb(241 245 249 / 75%); cursor: pointer; }
 .date-input-row button { width: 34px; }
-.date-popover { position: absolute; z-index: 65; top: calc(100% + 8px); left: 0; width: 282px; padding: 12px; border: 1px solid #ffffffc9; border-radius: 16px; background: linear-gradient(135deg,#f8fbfff5,#e5eefbea); box-shadow: 0 18px 40px #1e325038; backdrop-filter: blur(24px); }
+.date-popover { position: static; width: 100%; max-height: inherit; overflow-y: auto; padding: 12px; border: 1px solid #ffffffc9; border-radius: 16px; background: linear-gradient(135deg,#f8fbfff5,#e5eefbea); box-shadow: 0 18px 40px #1e325038; backdrop-filter: blur(24px); }
 .date-popover header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .date-popover header button { width: 30px; height: 28px; }
 .weekdays, .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; text-align: center; }
