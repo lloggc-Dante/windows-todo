@@ -16,19 +16,17 @@ export const useTasksStore = defineStore('tasks', () => {
 
   async function initialize(): Promise<void> {
     lists.value = await window.appApi.listLists()
-    if (lists.value.length === 0) {
-      const list = await window.appApi.createList('我的待办')
-      lists.value = [list]
-    }
-    await selectList(lists.value[0].id)
+    if (lists.value.length > 0) await selectList(lists.value[0].id)
   }
 
   async function refresh(): Promise<void> {
     const previousListId = selectedListId.value
     lists.value = await window.appApi.listLists()
     if (lists.value.length === 0) {
-      const list = await window.appApi.createList('我的待办')
-      lists.value = [list]
+      selectedListId.value = null
+      selectedTaskId.value = null
+      tasks.value = []
+      return
     }
     const nextListId: string = previousListId !== null && lists.value.some(list => list.id === previousListId)
       ? previousListId
@@ -62,11 +60,13 @@ export const useTasksStore = defineStore('tasks', () => {
   async function deleteList(id: string): Promise<void> {
     await window.appApi.deleteList(id)
     lists.value = await window.appApi.listLists()
-    if (lists.value.length === 0) {
-      const list = await window.appApi.createList('我的待办')
-      lists.value = [list]
+    if (lists.value.length > 0) {
+      await selectList(lists.value[0].id)
+    } else {
+      selectedListId.value = null
+      selectedTaskId.value = null
+      tasks.value = []
     }
-    await selectList(lists.value[0].id)
   }
 
   async function addTask(title: string): Promise<void> {

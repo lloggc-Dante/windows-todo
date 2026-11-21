@@ -61,6 +61,9 @@ export function registerTaskIpc(
   broadcast: () => void = broadcastTasksChanged,
 ): void {
   let pendingBackupPath: string | null = null
+  const ensureDefaultList = (): void => {
+    if (store.listLists().length === 0) store.createList('我的待办')
+  }
   const changed = async <T>(operation: () => T): Promise<T> => {
     const result = operation()
     broadcast()
@@ -74,7 +77,10 @@ export function registerTaskIpc(
   ipcMain.handle('lists:rename', (_event, id, name) =>
     changed(() => store.renameList(stringValue(id, '清单ID'), stringValue(name, '清单名称'))))
   ipcMain.handle('lists:delete', (_event, id) =>
-    changed(() => store.deleteList(stringValue(id, '清单ID'))))
+    changed(() => {
+      store.deleteList(stringValue(id, '清单ID'))
+      ensureDefaultList()
+    }))
   ipcMain.handle('tasks:list', (_event, listId) => store.listTasks(stringValue(listId, '清单ID')))
   ipcMain.handle('tasks:create', (_event, listId, title) =>
     changed(() => store.createTask(stringValue(listId, '清单ID'), stringValue(title, '标题'))))
@@ -124,6 +130,7 @@ export function registerTaskIpc(
     if (!pendingBackupPath) throw new Error('请先选择备份文件')
     await replaceFromBackup(db, pendingBackupPath)
     pendingBackupPath = null
+    ensureDefaultList()
     integration.setCloseToTray(store.getSetting('closeToTray') !== 'false')
     integration.setAutoStart(store.getSetting('autoStart') === 'true')
     broadcast()

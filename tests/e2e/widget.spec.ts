@@ -25,6 +25,8 @@ test.beforeEach(async () => {
   widget = app.windows().find(page => page.url().includes('widget.html'))!
   await expect(main.getByTestId('app-shell')).toBeVisible()
   await expect(widget.getByTestId('desktop-widget')).toBeVisible()
+  await expect.poll(() => main.evaluate(async () => (await window.appApi.listLists()).length)).toBe(1)
+  await expect.poll(() => widget.evaluate(async () => (await window.appApi.listLists()).length)).toBe(1)
 })
 
 test.afterEach(async () => {

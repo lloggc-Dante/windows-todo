@@ -48,6 +48,7 @@ function startApplication(): void {
     return
   }
   const store = new TaskStore(db)
+  if (store.listLists().length === 0) store.createList('我的待办')
   const widget = new WidgetWindowController({
     presentation: resolveWidgetPresentation({ platform: process.platform, release: release() }),
     hidden: process.argv.includes('--hidden'),
