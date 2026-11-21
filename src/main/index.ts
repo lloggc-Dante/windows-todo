@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { createDatabase } from './db/database'
 import { TaskStore } from './db/task-store'
 import { WindowsNotifier } from './notifier'
+import { registerTaskIpc } from './ipc'
 import { ReminderScheduler } from './reminder-scheduler'
 import { createTrayIcon } from './tray-icon'
 import { WindowController } from './window-controller'
@@ -38,6 +39,9 @@ function startApplication(): void {
   const db = createDatabase(join(dataDirectory, 'tasks.db'))
   const store = new TaskStore(db)
   const scheduler = new ReminderScheduler(db, store, new WindowsNotifier(), controller)
+  integration.setCloseToTray(store.getSetting('closeToTray') !== 'false')
+  integration.setAutoStart(store.getSetting('autoStart') === 'true')
+  registerTaskIpc(store, scheduler, integration)
   const checkReminders = (): void => {
     void scheduler.reconcile(new Date()).then(() => scheduler.reschedule())
   }
