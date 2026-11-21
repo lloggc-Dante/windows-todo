@@ -1,0 +1,139 @@
+:root {
+  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+  color: #203149;
+  background: transparent;
+}
+
+* { box-sizing: border-box; }
+html, body, #app { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+body { background: transparent; }
+button, input, select { font: inherit; }
+.no-drag, .no-drag * { -webkit-app-region: no-drag; }
+
+.widget-shell {
+  position: relative;
+  display: grid;
+  grid-template-rows: 52px auto 60px;
+  height: 100vh;
+  padding: 12px 16px;
+  overflow: hidden;
+  color: #203149;
+  background:
+    radial-gradient(circle at 92% -10%, rgb(255 255 255 / 72%), transparent 37%),
+    linear-gradient(115deg, rgb(255 255 255 / 66%), rgb(240 247 255 / 34%) 50%, rgb(225 240 255 / 52%));
+  border: 1px solid rgb(255 255 255 / 70%);
+  box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 rgb(212 234 255 / 35%), 0 18px 45px rgb(36 57 88 / 25%);
+  backdrop-filter: blur(28px) saturate(165%);
+}
+
+.widget-shell.mode-css { border-radius: 26px; }
+.widget-shell.mode-acrylic { border-radius: 0; box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 rgb(212 234 255 / 35%); }
+.widget-shell::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 8%;
+  right: 32%;
+  height: 1px;
+  background: #fff;
+  box-shadow: 0 0 14px #fff;
+  pointer-events: none;
+}
+
+.widget-header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-bottom: 1px solid rgb(255 255 255 / 48%);
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+.widget-grip, .widget-drag { color: #6c8099; cursor: grab; letter-spacing: -2px; }
+.widget-list-select {
+  max-width: 210px;
+  padding: 6px 28px 6px 12px;
+  border: 1px solid rgb(255 255 255 / 70%);
+  border-radius: 999px;
+  outline: 0;
+  color: #334c68;
+  background: rgb(255 255 255 / 42%);
+}
+.widget-count { margin-left: auto; color: #61758e; font-size: 11px; }
+.widget-menu-button {
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 65%);
+  border-radius: 50%;
+  color: #425b78;
+  background: rgb(255 255 255 / 36%);
+  cursor: pointer;
+}
+.widget-menu-button:hover { background: rgb(255 255 255 / 68%); }
+
+.widget-task-list {
+  position: relative;
+  z-index: 1;
+  min-height: 42px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(91 113 141 / 45%) transparent;
+}
+.widget-task-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 42px;
+  border-bottom: 1px solid rgb(255 255 255 / 28%);
+  cursor: default;
+}
+.widget-task-row:hover { background: linear-gradient(90deg, rgb(255 255 255 / 22%), transparent); }
+.widget-check {
+  flex: 0 0 19px;
+  width: 19px;
+  height: 19px;
+  padding: 0;
+  border: 1px solid #7185a0;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 24%);
+  cursor: pointer;
+}
+.widget-check:hover { border-color: #4f6fd4; background: #6a91ee; box-shadow: 0 0 10px rgb(106 145 238 / 35%); }
+.widget-task-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 550; }
+.widget-task-row small { margin-left: auto; color: #687b94; font-size: 10px; white-space: nowrap; }
+.widget-empty { display: grid; place-items: center; height: 42px; color: #71839a; font-size: 12px; }
+
+.widget-composer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-top: 1px solid rgb(255 255 255 / 50%);
+}
+.widget-composer input {
+  min-width: 0;
+  flex: 1;
+  padding: 9px 14px;
+  border: 1px solid rgb(255 255 255 / 48%);
+  border-radius: 999px;
+  outline: 0;
+  color: #334c68;
+  background: rgb(255 255 255 / 34%);
+  box-shadow: inset 0 1px 3px rgb(93 114 145 / 10%);
+}
+.widget-composer input:focus { background: rgb(255 255 255 / 58%); border-color: rgb(255 255 255 / 85%); }
+.widget-composer input::placeholder { color: #65768b; }
+.widget-composer button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgb(255 255 255 / 72%);
+  border-radius: 50%;
+  color: #37506e;
+  background: rgb(255 255 255 / 45%);
+  cursor: pointer;
+}

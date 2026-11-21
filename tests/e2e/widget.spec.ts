@@ -1,0 +1,80 @@
+import { _electron as electron, expect, test } from '@playwright/test'
+import type { ElectronApplication, Page } from '@playwright/test'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+
+let app: ElectronApplication
+let main: Page
+let widget: Page
+let dataDirectory: string
+
+async function addWidgetTask(title: string): Promise<void> {
+  await widget.getByTestId('widget-quick-add').fill(title)
+  await widget.getByTestId('widget-quick-add').press('Enter')
+}
+
+test.beforeEach(async () => {
+  dataDirectory = mkdtempSync(join(tmpdir(), 'windows-todo-widget-'))
+  app = await electron.launch({
+    args: ['.'],
+    env: { ...process.env, WINDOWS_TODO_TEST_DATA_DIR: dataDirectory },
+  })
+  await expect.poll(() => app.windows().length).toBe(2)
+  main = app.windows().find(page => !page.url().includes('widget.html'))!
+  widget = app.windows().find(page => page.url().includes('widget.html'))!
+  await expect(main.getByTestId('app-shell')).toBeVisible()
+  await expect(widget.getByTestId('desktop-widget')).toBeVisible()
+})
+
+test.afterEach(async () => {
+  await app.close()
+  rmSync(dataDirectory, { recursive: true, force: true })
+})
+
+test('adds, completes, switches lists, and reorders with live main-window sync', async () => {
+  await addWidgetTask('任务一')
+  await addWidgetTask('任务二')
+  await addWidgetTask('任务三')
+  await expect(widget.locator('[data-widget-task-title]')).toHaveText(['任务三', '任务二', '任务一'])
+  await expect(main.locator('[data-task-title]')).toHaveText(['任务三', '任务二', '任务一'])
+
+  const completedRow = widget.locator('.widget-task-row').filter({ hasText: '任务二' })
+  await completedRow.getByRole('button', { name: '完成任务' }).click()
+  await expect(widget.locator('[data-widget-task-title]')).toHaveText(['任务三', '任务一'])
+  await expect(main.locator('[data-task-title]')).toHaveText(['任务三', '任务一'])
+
+  await main.getByLabel('新清单名称').fill('其他清单')
+  await main.getByRole('button', { name: '添加清单' }).click()
+  await expect(widget.getByTestId('widget-list-select')).toContainText('其他清单')
+  await widget.getByTestId('widget-list-select').selectOption({ label: '其他清单' })
+  await addWidgetTask('新清单任务')
+  await expect(main.locator('[data-task-title]')).toHaveText(['新清单任务'])
+
+  await widget.getByTestId('widget-list-select').selectOption({ label: '我的待办' })
+  await addWidgetTask('任务四')
+  const source = widget.locator('.widget-task-row').filter({ hasText: '任务一' })
+  const target = widget.locator('.widget-task-row').filter({ hasText: '任务四' })
+  await source.dragTo(target)
+  await expect(widget.locator('[data-widget-task-title]')).toHaveText(['任务一', '任务四', '任务三'])
+  await main.getByRole('button', { name: '我的待办', exact: true }).click()
+  await expect(main.locator('[data-task-title]')).toHaveText(['任务一', '任务四', '任务三'])
+})
+
+test('keeps all nine task rows inside an eight-row scrolling viewport', async () => {
+  for (let index = 1; index <= 9; index += 1) await addWidgetTask(`任务 ${index}`)
+
+  await expect(widget.locator('.widget-task-row')).toHaveCount(9)
+  const metrics = await widget.getByTestId('widget-task-list').evaluate(element => ({
+    clientHeight: element.clientHeight,
+    scrollHeight: element.scrollHeight,
+  }))
+  expect(metrics.clientHeight).toBe(8 * 42)
+  expect(metrics.scrollHeight).toBeGreaterThan(metrics.clientHeight)
+  const windowHeight = await app.evaluate(({ BrowserWindow }) => {
+    const window = BrowserWindow.getAllWindows().find(item => item.webContents.getURL().includes('widget.html'))
+    return window?.getBounds().height
+  })
+  expect(windowHeight).toBeGreaterThanOrEqual(472)
+  expect(windowHeight).toBeLessThanOrEqual(473)
+})

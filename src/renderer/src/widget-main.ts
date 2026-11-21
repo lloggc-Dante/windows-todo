@@ -1,5 +1,6 @@
-import { createApp, h } from 'vue'
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import WidgetApp from './WidgetApp.vue'
+import './widget.css'
 
-createApp({
-  render: () => h('main', { 'data-testid': 'desktop-widget' }, '桌面贴片'),
-}).mount('#app')
+createApp(WidgetApp).use(createPinia()).mount('#app')
