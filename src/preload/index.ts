@@ -4,6 +4,9 @@ import type { AppApi } from '../shared/contracts'
 
 const api: AppApi = {
   getAppVersion: () => ipcRenderer.invoke('app:get-version'),
+  minimizeWindow: () => ipcRenderer.invoke('window:minimize'),
+  toggleMaximizeWindow: () => ipcRenderer.invoke('window:toggle-maximize'),
+  closeWindow: () => ipcRenderer.invoke('window:close'),
   listLists: () => ipcRenderer.invoke('lists:list'),
   createList: name => ipcRenderer.invoke('lists:create', name),
   renameList: (id, name) => ipcRenderer.invoke('lists:rename', id, name),

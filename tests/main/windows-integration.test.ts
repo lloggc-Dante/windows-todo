@@ -51,6 +51,11 @@ function createWindow() {
     restore() {
       this.restored = true
     },
+    minimize() {},
+    isMaximized() { return false },
+    maximize() {},
+    unmaximize() {},
+    close() {},
     webContents: {
       send: (channel: string, taskId: string) => {
         if (channel === 'tasks:select') window.selectedTask = taskId

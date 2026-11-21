@@ -12,9 +12,11 @@ import { WindowController } from './window-controller'
 import { handleStartupFailure, WindowsIntegration } from './windows-integration'
 import { WidgetWindowController } from './widget-window-controller'
 import { registerWidgetIpc } from './widget-ipc'
+import { registerWindowIpc } from './window-ipc'
 import { resolveWidgetPresentation } from '../shared/widget'
 
 app.setAppUserModelId('com.windows-todo.app')
+Menu.setApplicationMenu(null)
 if (process.env.WINDOWS_TODO_TEST_DATA_DIR) {
   app.setPath('userData', process.env.WINDOWS_TODO_TEST_DATA_DIR)
 }
@@ -26,6 +28,7 @@ function startApplication(): void {
     minWidth: 920,
     minHeight: 520,
     show: false,
+    frame: false,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -82,6 +85,7 @@ function startApplication(): void {
   integration.setAutoStart(store.getSetting('autoStart') === 'true')
   registerTaskIpc(db, store, scheduler, integration, window, undefined, () => widget.applySettings())
   registerWidgetIpc(widget, controller, store)
+  registerWindowIpc(controller)
   const checkReminders = (): void => {
     void scheduler.reconcile(new Date())
       .then(() => scheduler.reschedule())

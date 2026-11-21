@@ -12,6 +12,9 @@ export interface AppSettings {
 
 export interface AppApi {
   getAppVersion(): Promise<string>
+  minimizeWindow(): Promise<void>
+  toggleMaximizeWindow(): Promise<void>
+  closeWindow(): Promise<void>
   listLists(): Promise<List[]>
   createList(name: string): Promise<List>
   renameList(id: string, name: string): Promise<List>
