@@ -41,6 +41,9 @@ describe('manual backup', () => {
     source.store.completeTask(recurring.id, new Date(2026, 10, 20, 8, 0))
     source.store.reorderTasks(list.id, [noDate.id, recurring.id])
     source.store.setSetting('dateOnlyReminderTime', '08:30')
+    source.store.setSetting('widgetVisible', 'false')
+    source.store.setSetting('widgetSelectedList', list.id)
+    source.store.setSetting('widgetPosition', JSON.stringify({ displayId: 1, x: 120, y: 240 }))
     const filename = join(tempDirectory(), 'backup.json')
     await exportBackup(source.db, filename)
 
@@ -60,6 +63,9 @@ describe('manual backup', () => {
     expect(target.store.getTask(recurring.id).dueLocal).toBe('2026-11-23')
     expect(target.store.listCompletions(recurring.id)).toHaveLength(1)
     expect(target.store.getSetting('dateOnlyReminderTime')).toBe('08:30')
+    expect(target.store.getSetting('widgetVisible')).toBe('false')
+    expect(target.store.getSetting('widgetSelectedList')).toBe(list.id)
+    expect(target.store.getSetting('widgetPosition')).toContain('"x":120')
     expect(JSON.parse(readFileSync(filename, 'utf8'))).toMatchObject({
       format: 'windows-todo-backup',
       schemaVersion: 1,

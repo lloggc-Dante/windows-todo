@@ -6,6 +6,7 @@ export interface AppSettings {
   closeToTray: boolean
   autoStart: boolean
   notificationsEnabled: boolean
+  showWidget: boolean
   dateOnlyReminderTime: string
 }
 

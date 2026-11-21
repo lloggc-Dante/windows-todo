@@ -59,6 +59,7 @@ export function registerTaskIpc(
   integration: WindowsIntegration,
   window: BrowserWindow,
   broadcast: () => void = broadcastTasksChanged,
+  applyWidgetSettings: () => void = () => undefined,
 ): void {
   let pendingBackupPath: string | null = null
   const ensureDefaultList = (): void => {
@@ -133,6 +134,7 @@ export function registerTaskIpc(
     ensureDefaultList()
     integration.setCloseToTray(store.getSetting('closeToTray') !== 'false')
     integration.setAutoStart(store.getSetting('autoStart') === 'true')
+    applyWidgetSettings()
     broadcast()
     await scheduler.reschedule()
   })
@@ -141,6 +143,7 @@ export function registerTaskIpc(
     closeToTray: store.getSetting('closeToTray') !== 'false',
     autoStart: store.getSetting('autoStart') === 'true',
     notificationsEnabled: store.getSetting('notificationsEnabled') !== 'false',
+    showWidget: store.getSetting('widgetVisible') !== 'false',
     dateOnlyReminderTime: store.getSetting('dateOnlyReminderTime') ?? '09:00',
   }))
   ipcMain.handle('settings:update', async (_event, value): Promise<AppSettings> => {
@@ -149,7 +152,7 @@ export function registerTaskIpc(
     }
     const patch = value as Record<string, unknown>
     for (const [key, entry] of Object.entries(patch)) {
-      if (!['closeToTray', 'autoStart', 'notificationsEnabled', 'dateOnlyReminderTime'].includes(key)) {
+      if (!['closeToTray', 'autoStart', 'notificationsEnabled', 'showWidget', 'dateOnlyReminderTime'].includes(key)) {
         throw new Error('设置包含未知字段')
       }
       if (key === 'dateOnlyReminderTime') {
@@ -159,15 +162,18 @@ export function registerTaskIpc(
       } else if (typeof entry !== 'boolean') {
         throw new Error(`${key}必须是布尔值`)
       }
-      store.setSetting(key, String(entry))
+      const settingKey = key === 'showWidget' ? 'widgetVisible' : key
+      store.setSetting(settingKey, String(entry))
     }
     if ('closeToTray' in patch) integration.setCloseToTray(Boolean(patch.closeToTray))
     if ('autoStart' in patch) integration.setAutoStart(Boolean(patch.autoStart))
+    if ('showWidget' in patch) applyWidgetSettings()
     await scheduler.reschedule()
     return {
       closeToTray: store.getSetting('closeToTray') !== 'false',
       autoStart: store.getSetting('autoStart') === 'true',
       notificationsEnabled: store.getSetting('notificationsEnabled') !== 'false',
+      showWidget: store.getSetting('widgetVisible') !== 'false',
       dateOnlyReminderTime: store.getSetting('dateOnlyReminderTime') ?? '09:00',
     }
   })

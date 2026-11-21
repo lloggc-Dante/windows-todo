@@ -98,6 +98,7 @@ export class WidgetWindowController {
   }
 
   applySettings(): void {
+    this.clampToDisplays()
     if (this.options.settings.getSetting('widgetVisible') === 'false') {
       this.window?.hide()
       return

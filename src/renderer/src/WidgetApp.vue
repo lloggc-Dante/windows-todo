@@ -33,7 +33,14 @@ onMounted(async () => {
     await window.appApi.setWidgetSelectedList(selectedListId.value)
   }
   unsubscribe = window.appApi.onTasksChanged(() => {
-    void store.refresh()
+    void (async () => {
+      await store.refresh()
+      const refreshedList = await window.appApi.getWidgetSelectedList()
+      if (refreshedList && refreshedList !== selectedListId.value
+        && lists.value.some(list => list.id === refreshedList)) {
+        await store.selectList(refreshedList)
+      }
+    })()
   })
 })
 

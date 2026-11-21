@@ -77,7 +77,7 @@ function startApplication(): void {
   const scheduler = new ReminderScheduler(db, store, new WindowsNotifier(), controller)
   integration.setCloseToTray(store.getSetting('closeToTray') !== 'false')
   integration.setAutoStart(store.getSetting('autoStart') === 'true')
-  registerTaskIpc(db, store, scheduler, integration, window)
+  registerTaskIpc(db, store, scheduler, integration, window, undefined, () => widget.applySettings())
   registerWidgetIpc(widget, controller, store)
   const checkReminders = (): void => {
     void scheduler.reconcile(new Date())

@@ -11,6 +11,7 @@ const settings = reactive<AppSettings>({
   closeToTray: true,
   autoStart: false,
   notificationsEnabled: true,
+  showWidget: true,
   dateOnlyReminderTime: '09:00',
 })
 const preview = ref<BackupPreview | null>(null)
@@ -80,6 +81,10 @@ async function confirmImport(): Promise<void> {
         <h2>设置</h2>
         <button type="button" aria-label="关闭设置" @click="emit('close')">×</button>
       </header>
+      <label class="setting-row">
+        <span>显示桌面贴片</span>
+        <input v-model="settings.showWidget" type="checkbox" @change="saveSettings" />
+      </label>
       <label class="setting-row">
         <span>关闭窗口时隐藏到托盘</span>
         <input v-model="settings.closeToTray" type="checkbox" @change="saveSettings" />
