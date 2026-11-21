@@ -14,7 +14,8 @@ test.beforeEach(async () => {
     args: ['.'],
     env: { ...process.env, WINDOWS_TODO_TEST_DATA_DIR: dataDirectory },
   })
-  page = await app.firstWindow()
+  await expect.poll(() => app.windows().length).toBe(2)
+  page = app.windows().find(candidate => !candidate.url().includes('widget.html'))!
   await expect(page.getByTestId('quick-add-input')).toBeVisible()
   await page.getByTestId('quick-add-input').fill('重复任务')
   await page.getByTestId('quick-add-input').press('Enter')
@@ -60,7 +61,8 @@ test('shows recurring completion history and undo in the task detail', async () 
 })
 
 test('keeps task editing available at the minimum window width', async () => {
-  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(760, 700))
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()
+    .find(item => !item.webContents.getURL().includes('widget.html'))?.setSize(760, 700))
   await page.locator('[data-task-title]').click()
   await expect(page.getByTestId('task-title-input')).toBeVisible()
 })

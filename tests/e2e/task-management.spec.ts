@@ -11,7 +11,8 @@ test('manages title-only tasks, manual order, and collapsed completion history',
   })
 
   try {
-    const page = await app.firstWindow()
+    await expect.poll(() => app.windows().length).toBe(2)
+    const page = app.windows().find(candidate => !candidate.url().includes('widget.html'))!
     const quickAdd = page.getByTestId('quick-add-input')
     await expect(quickAdd).toBeVisible()
 
