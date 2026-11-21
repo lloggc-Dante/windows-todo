@@ -89,22 +89,68 @@ export class TaskStore {
     const id = randomUUID()
     const now = new Date().toISOString()
     const normalizedTitle = requiredName(title, '任务标题不能为空')
-    const nextOrder = this.db.prepare(
-      'SELECT COALESCE(MAX(sort_order), -1) + 1 AS value FROM tasks WHERE list_id = ?',
-    ).get(listId) as { value: number }
-
-    this.db.prepare(`
-      INSERT INTO tasks(id, list_id, title, sort_order, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(id, listId, normalizedTitle, nextOrder.value, now, now)
+    this.db.transaction(() => {
+      this.db.prepare(
+        'UPDATE tasks SET sort_order = sort_order + 1 WHERE list_id = ? AND completed_at IS NULL',
+      ).run(listId)
+      this.db.prepare(`
+        INSERT INTO tasks(id, list_id, title, sort_order, created_at, updated_at)
+        VALUES (?, ?, ?, 0, ?, ?)
+      `).run(id, listId, normalizedTitle, now, now)
+    })()
     return this.getTask(id)
   }
 
   listTasks(listId: string): Task[] {
     const rows = this.db.prepare(
-      'SELECT * FROM tasks WHERE list_id = ? ORDER BY sort_order, created_at, id',
+      `SELECT * FROM tasks WHERE list_id = ?
+       ORDER BY completed_at IS NOT NULL, sort_order, completed_at DESC, created_at, id`,
     ).all(listId) as TaskRow[]
     return rows.map(toTask)
+  }
+
+  reorderTasks(listId: string, orderedTaskIds: string[]): Task[] {
+    if (new Set(orderedTaskIds).size !== orderedTaskIds.length) {
+      throw new Error('任务顺序包含重复任务')
+    }
+
+    const currentIds = this.db.prepare(
+      'SELECT id FROM tasks WHERE list_id = ? AND completed_at IS NULL',
+    ).all(listId) as Array<{ id: string }>
+    const expectedIds = new Set(currentIds.map(row => row.id))
+    const suppliedIds = new Set(orderedTaskIds)
+    const sameTasks = expectedIds.size === suppliedIds.size
+      && [...expectedIds].every(id => suppliedIds.has(id))
+    if (!sameTasks) {
+      throw new Error('任务顺序必须包含清单中的全部未完成任务')
+    }
+
+    const update = this.db.prepare(
+      'UPDATE tasks SET sort_order = ?, updated_at = ? WHERE id = ? AND list_id = ?',
+    )
+    this.db.transaction(() => {
+      const now = new Date().toISOString()
+      orderedTaskIds.forEach((id, index) => update.run(index, now, id, listId))
+    })()
+    return this.listTasks(listId).filter(task => task.completedAt === null)
+  }
+
+  moveTaskToList(taskId: string, targetListId: string): Task {
+    const task = this.getTask(taskId)
+    this.getList(targetListId)
+
+    this.db.transaction(() => {
+      if (task.completedAt === null) {
+        this.db.prepare(
+          'UPDATE tasks SET sort_order = sort_order + 1 WHERE list_id = ? AND completed_at IS NULL',
+        ).run(targetListId)
+      }
+      this.db.prepare(
+        'UPDATE tasks SET list_id = ?, sort_order = 0, updated_at = ? WHERE id = ?',
+      ).run(targetListId, new Date().toISOString(), taskId)
+      this.rebalanceList(task.listId)
+    })()
+    return this.getTask(taskId)
   }
 
   updateTask(id: string, patch: TaskPatch): Task {
@@ -156,6 +202,14 @@ export class TaskStore {
     const row = this.db.prepare('SELECT * FROM tasks WHERE id = ?').get(id) as TaskRow | undefined
     if (!row) throw new Error('任务不存在')
     return toTask(row)
+  }
+
+  private rebalanceList(listId: string): void {
+    const rows = this.db.prepare(
+      'SELECT id FROM tasks WHERE list_id = ? AND completed_at IS NULL ORDER BY sort_order, created_at, id',
+    ).all(listId) as Array<{ id: string }>
+    const update = this.db.prepare('UPDATE tasks SET sort_order = ? WHERE id = ?')
+    rows.forEach((row, index) => update.run(index, row.id))
   }
 
   private getList(id: string): List {
