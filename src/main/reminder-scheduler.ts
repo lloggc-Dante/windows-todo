@@ -125,9 +125,13 @@ export class ReminderScheduler {
     this.db.transaction(() => {
       this.db.prepare("DELETE FROM reminders WHERE status = 'pending'").run()
       for (const task of tasks) {
-        const remindAt = reminderTime(task, dateOnlyTime)
-        if (remindAt && task.dueLocal) {
-          insert.run(crypto.randomUUID(), task.id, task.dueLocal, remindAt)
+        try {
+          const remindAt = reminderTime(task, dateOnlyTime)
+          if (remindAt && task.dueLocal) {
+            insert.run(crypto.randomUUID(), task.id, task.dueLocal, remindAt)
+          }
+        } catch {
+          continue
         }
       }
     })()

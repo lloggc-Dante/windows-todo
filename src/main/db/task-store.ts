@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import type Database from 'better-sqlite3'
 import type { List, Task, TaskCompletion, TaskPatch } from '../../shared/tasks'
-import { nextOccurrence } from '../recurrence'
+import { assertLocalDateTime } from '../../shared/local-date-time'
+import { assertValidRecurrenceRule, nextOccurrence } from '../recurrence'
 
 interface ListRow {
   id: string
@@ -18,6 +19,7 @@ interface TaskRow {
   due_local: string | null
   due_has_time: number
   recurrence_rule: string | null
+  series_start: string | null
   reminder_offset_minutes: number | null
   sort_order: number
   completed_at: string | null
@@ -43,6 +45,7 @@ function toTask(row: TaskRow): Task {
     dueLocal: row.due_local,
     dueHasTime: row.due_has_time === 1,
     recurrenceRule: row.recurrence_rule,
+    seriesStart: row.series_start,
     reminderOffsetMinutes: row.reminder_offset_minutes,
     sortOrder: row.sort_order,
     completedAt: row.completed_at,
@@ -198,10 +201,22 @@ export class TaskStore {
     const dueHasTime = dueLocal
       ? (patch.dueHasTime === undefined ? current.dueHasTime : patch.dueHasTime)
       : false
+    assertLocalDateTime(dueLocal, dueHasTime)
+    assertValidRecurrenceRule(dueLocal ? recurrenceRule : null)
+
+    const recurrenceChanged = patch.recurrenceRule !== undefined
+      && patch.recurrenceRule !== current.recurrenceRule
+    const dueChanged = patch.dueLocal !== undefined && patch.dueLocal !== current.dueLocal
+    const timeModeChanged = patch.dueHasTime !== undefined && patch.dueHasTime !== current.dueHasTime
+    let seriesStart = dueLocal && recurrenceRule ? current.seriesStart : null
+    if (recurrenceRule && dueLocal
+      && (!seriesStart || recurrenceChanged || dueChanged || timeModeChanged)) {
+      seriesStart = dueLocal
+    }
 
     this.db.prepare(`
       UPDATE tasks SET
-        title = ?, notes = ?, due_local = ?, due_has_time = ?, recurrence_rule = ?,
+        title = ?, notes = ?, due_local = ?, due_has_time = ?, recurrence_rule = ?, series_start = ?,
         reminder_offset_minutes = ?, updated_at = ?
       WHERE id = ?
     `).run(
@@ -210,6 +225,7 @@ export class TaskStore {
       dueLocal,
       dueHasTime ? 1 : 0,
       dueLocal ? recurrenceRule : null,
+      seriesStart,
       dueLocal ? reminderOffsetMinutes : null,
       new Date().toISOString(),
       id,

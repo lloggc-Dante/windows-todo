@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
-import type { List, Task, TaskPatch } from '../../../../shared/tasks'
+import { reactive, ref, watch } from 'vue'
+import type { List, Task, TaskCompletion, TaskPatch } from '../../../../shared/tasks'
 
 const props = defineProps<{
   task: Task | null
@@ -10,6 +10,7 @@ const emit = defineEmits<{
   save: [patch: TaskPatch]
   move: [taskId: string, listId: string]
   remove: [taskId: string]
+  undo: [taskId: string]
 }>()
 const draft = reactive({
   title: '',
@@ -21,7 +22,11 @@ const draft = reactive({
   reminder: '',
 })
 
-watch(() => props.task, task => {
+const completions = ref<TaskCompletion[]>([])
+const recurrenceDirty = ref(false)
+let historyRequest = 0
+
+watch(() => props.task, async task => {
   draft.title = task?.title ?? ''
   draft.notes = task?.notes ?? ''
   draft.date = task?.dueLocal?.slice(0, 10) ?? ''
@@ -29,18 +34,28 @@ watch(() => props.task, task => {
   draft.time = task?.dueLocal?.includes('T') ? task.dueLocal.slice(11) : '09:00'
   draft.recurrence = task?.recurrenceRule?.match(/FREQ=(DAILY|WEEKLY|MONTHLY|YEARLY)/)?.[1] ?? ''
   draft.reminder = task?.reminderOffsetMinutes?.toString() ?? ''
+  recurrenceDirty.value = false
+  const request = ++historyRequest
+  const history = task ? await window.appApi.listCompletions(task.id) : []
+  if (request === historyRequest) completions.value = history
 }, { immediate: true })
 
 function save(): void {
+  if (draft.date && draft.hasTime && !draft.time) draft.time = '09:00'
   const dueLocal = draft.date
     ? `${draft.date}${draft.hasTime ? `T${draft.time}` : ''}`
+    : null
+  const recurrenceRule = dueLocal && draft.recurrence
+    ? (!recurrenceDirty.value && props.task?.recurrenceRule
+      ? props.task.recurrenceRule
+      : `FREQ=${draft.recurrence}`)
     : null
   emit('save', {
     title: draft.title,
     notes: draft.notes.trim() || null,
     dueLocal,
     dueHasTime: Boolean(draft.date && draft.hasTime),
-    recurrenceRule: dueLocal && draft.recurrence ? `FREQ=${draft.recurrence}` : null,
+    recurrenceRule,
     reminderOffsetMinutes: dueLocal && draft.reminder !== '' ? Number(draft.reminder) : null,
   })
 }
@@ -66,7 +81,7 @@ function save(): void {
       <input v-if="draft.date && draft.hasTime" v-model="draft.time" type="time" aria-label="截止时间" />
       <template v-if="draft.date">
         <label>重复</label>
-        <select v-model="draft.recurrence" aria-label="重复规则">
+        <select v-model="draft.recurrence" aria-label="重复规则" @change="recurrenceDirty = true">
           <option value="">不重复</option>
           <option value="DAILY">每天</option>
           <option value="WEEKLY">每周</option>
@@ -83,6 +98,15 @@ function save(): void {
           <option value="1440">提前 1 天</option>
         </select>
       </template>
+      <section class="completion-history" data-testid="completion-history">
+        <h3>完成历史</h3>
+        <p v-if="completions.length === 0">暂无完成记录</p>
+        <div v-for="completion in completions" :key="completion.id" class="history-item">
+          <span>{{ completion.occurrenceKey.replace('T', ' ') }}</span>
+          <small>{{ completion.completedAt.replace('T', ' ').slice(0, 16) }}</small>
+        </div>
+        <button v-if="completions.length > 0" type="button" class="undo-button" @click="emit('undo', task.id)">撤销最近完成</button>
+      </section>
       <div class="detail-actions">
         <button class="save" type="button" @click="save">保存</button>
         <button class="delete" type="button" @click="emit('remove', task.id)">删除</button>
@@ -100,6 +124,12 @@ input:not([type='checkbox']), textarea, select { box-sizing: border-box; width: 
 textarea { resize: vertical; }
 .inline-field { display: flex; align-items: center; gap: 6px; }
 .detail-actions { display: flex; gap: 10px; margin-top: 24px; }
+.completion-history { margin-top: 22px; padding-top: 12px; border-top: 1px solid #e2e8f0; }
+.completion-history h3 { font-size: 14px; }
+.completion-history p { color: #94a3b8; }
+.history-item { display: flex; flex-direction: column; gap: 3px; padding: 7px 0; color: #475569; }
+.history-item small { color: #94a3b8; }
+.undo-button { margin-top: 8px; padding: 8px 10px; border: 0; border-radius: 7px; background: #e0e9ff; color: #1d4ed8; cursor: pointer; }
 .detail-actions button { flex: 1; padding: 10px; border: 0; border-radius: 7px; cursor: pointer; }
 .save { background: #2563eb; color: white; }
 .delete { background: #fee2e2; color: #b91c1c; }

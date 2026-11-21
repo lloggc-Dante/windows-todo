@@ -57,3 +57,27 @@ export class WindowsIntegration {
     this.app.quit()
   }
 }
+
+
+interface StartupDialog {
+  showErrorBox(title: string, message: string): void
+}
+
+interface StartupWindow {
+  destroy(): void
+}
+
+export function handleStartupFailure(
+  app: Pick<IntegrationApp, 'quit'>,
+  dialog: StartupDialog,
+  window: StartupWindow,
+  error: unknown,
+): void {
+  const detail = error instanceof Error ? error.message : String(error)
+  dialog.showErrorBox(
+    '无法打开待办数据',
+    `${detail}\n\n请使用手动备份恢复数据，或备份数据目录后联系维护者。应用将退出，不会重置数据库。`,
+  )
+  window.destroy()
+  app.quit()
+}

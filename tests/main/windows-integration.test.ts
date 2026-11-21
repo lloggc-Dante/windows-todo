@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { WindowController } from '../../src/main/window-controller'
-import { WindowsIntegration } from '../../src/main/windows-integration'
+import { handleStartupFailure, WindowsIntegration } from '../../src/main/windows-integration'
 
 class FakeApp {
   quitRequested = false
@@ -129,5 +129,26 @@ describe('WindowController', () => {
     expect(window.visible).toBe(true)
     expect(window.focused).toBe(true)
     expect(window.selectedTask).toBe('task-123')
+  })
+})
+
+
+describe('startup failures', () => {
+  it('shows a useful database error, destroys the blank window, and exits', () => {
+    const app = new FakeApp()
+    const window = { destroyed: false, destroy() { this.destroyed = true } }
+    let errorMessage = ''
+    const dialog = {
+      showErrorBox(title: string, message: string) {
+        errorMessage = `${title}: ${message}`
+      },
+    }
+
+    handleStartupFailure(app, dialog, window, new Error('数据库版本较新'))
+
+    expect(errorMessage).toContain('无法打开待办数据')
+    expect(errorMessage).toContain('数据库版本较新')
+    expect(window.destroyed).toBe(true)
+    expect(app.quitRequested).toBe(true)
   })
 })

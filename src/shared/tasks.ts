@@ -13,6 +13,7 @@ export interface Task {
   dueLocal: string | null
   dueHasTime: boolean
   recurrenceRule: string | null
+  seriesStart: string | null
   reminderOffsetMinutes: number | null
   sortOrder: number
   completedAt: string | null

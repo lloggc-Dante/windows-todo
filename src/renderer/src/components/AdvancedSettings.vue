@@ -22,7 +22,15 @@ onMounted(async () => {
 })
 
 async function saveSettings(): Promise<void> {
-  Object.assign(settings, await window.appApi.updateSettings({ ...settings }))
+  try {
+    Object.assign(settings, await window.appApi.updateSettings({ ...settings }))
+  } catch (reason) {
+    status.value = failureMessage(reason)
+  }
+}
+
+function failureMessage(reason: unknown): string {
+  return reason instanceof Error ? reason.message : '操作失败，请重试'
 }
 
 async function exportData(): Promise<void> {
@@ -30,6 +38,8 @@ async function exportData(): Promise<void> {
   try {
     const exported = await window.appApi.exportBackup()
     status.value = exported ? '备份已导出' : '已取消导出'
+  } catch (reason) {
+    status.value = failureMessage(reason)
   } finally {
     busy.value = false
   }
@@ -40,6 +50,8 @@ async function chooseBackup(): Promise<void> {
   try {
     preview.value = await window.appApi.previewBackup()
     status.value = preview.value ? '请核对备份内容，导入将替换全部数据' : '已取消导入'
+  } catch (reason) {
+    status.value = failureMessage(reason)
   } finally {
     busy.value = false
   }
@@ -53,6 +65,8 @@ async function confirmImport(): Promise<void> {
     preview.value = null
     status.value = '导入完成'
     emit('imported')
+  } catch (reason) {
+    status.value = failureMessage(reason)
   } finally {
     busy.value = false
   }

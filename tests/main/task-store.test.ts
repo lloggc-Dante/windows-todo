@@ -90,3 +90,17 @@ describe('database migrations', () => {
     }
   })
 })
+
+
+describe('invalid date regression', () => {
+  it.each([
+    { dueLocal: '2026-11-22T', dueHasTime: true },
+    { dueLocal: '2026-02-30', dueHasTime: false },
+    { dueLocal: '2026-11-22', dueHasTime: true },
+  ])('rejects invalid or inconsistent due values: %j', ({ dueLocal, dueHasTime }) => {
+    const { store } = openStore()
+    const list = store.createList('待办')
+    const task = store.createTask(list.id, '任务')
+    expect(() => store.updateTask(task.id, { dueLocal, dueHasTime })).toThrow('无效')
+  })
+})

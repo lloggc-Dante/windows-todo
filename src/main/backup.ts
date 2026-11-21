@@ -2,6 +2,8 @@ import { readFile, stat, writeFile } from 'node:fs/promises'
 import type Database from 'better-sqlite3'
 import type { BackupData, BackupFile, BackupPreview } from '../shared/backup'
 import type { List, Task, TaskCompletion } from '../shared/tasks'
+import { assertLocalDateTime } from '../shared/local-date-time'
+import { assertValidRecurrenceRule } from './recurrence'
 import { TaskStore } from './db/task-store'
 
 const MAX_BACKUP_BYTES = 50 * 1024 * 1024
@@ -42,20 +44,28 @@ function parseTask(value: unknown): Task {
     && (typeof item.reminderOffsetMinutes !== 'number' || !Number.isFinite(item.reminderOffsetMinutes))) {
     throw new Error('备份字段 task.reminderOffsetMinutes 无效')
   }
-  return {
+  const dueLocal = nullableText(item.dueLocal, 'task.dueLocal')
+  const recurrenceRule = nullableText(item.recurrenceRule, 'task.recurrenceRule')
+  const task: Task = {
     id: text(item.id, 'task.id'),
     listId: text(item.listId, 'task.listId'),
     title: text(item.title, 'task.title'),
     notes: nullableText(item.notes, 'task.notes'),
-    dueLocal: nullableText(item.dueLocal, 'task.dueLocal'),
+    dueLocal,
     dueHasTime: item.dueHasTime,
-    recurrenceRule: nullableText(item.recurrenceRule, 'task.recurrenceRule'),
+    recurrenceRule,
+    seriesStart: item.seriesStart === undefined
+      ? (recurrenceRule ? dueLocal : null)
+      : nullableText(item.seriesStart, 'task.seriesStart'),
     reminderOffsetMinutes: item.reminderOffsetMinutes as number | null,
     sortOrder: item.sortOrder as number,
     completedAt: nullableText(item.completedAt, 'task.completedAt'),
     createdAt: text(item.createdAt, 'task.createdAt'),
     updatedAt: text(item.updatedAt, 'task.updatedAt'),
   }
+  assertLocalDateTime(task.dueLocal, task.dueHasTime)
+  assertValidRecurrenceRule(task.recurrenceRule)
+  return task
 }
 
 function parseCompletion(value: unknown): TaskCompletion {
@@ -168,14 +178,14 @@ export async function replaceFromBackup(db: Database.Database, filename: string)
 
     const insertTask = db.prepare(`
       INSERT INTO tasks(
-        id, list_id, title, notes, due_local, due_has_time, recurrence_rule,
+        id, list_id, title, notes, due_local, due_has_time, recurrence_rule, series_start,
         reminder_offset_minutes, sort_order, completed_at, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
     for (const task of data.tasks) {
       insertTask.run(
         task.id, task.listId, task.title, task.notes, task.dueLocal, task.dueHasTime ? 1 : 0,
-        task.recurrenceRule, task.reminderOffsetMinutes, task.sortOrder, task.completedAt,
+        task.recurrenceRule, task.seriesStart, task.reminderOffsetMinutes, task.sortOrder, task.completedAt,
         task.createdAt, task.updatedAt,
       )
     }

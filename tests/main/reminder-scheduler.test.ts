@@ -149,3 +149,23 @@ describe('ReminderScheduler', () => {
     }
   })
 })
+
+
+describe('corrupt reminder isolation', () => {
+  it('skips one corrupt date without blocking valid reminders', async () => {
+    const { db, store, notifier, scheduler } = setup()
+    const list = store.createList('待办')
+    const corrupt = store.createTask(list.id, '坏数据')
+    db.prepare("UPDATE tasks SET due_local = '2026-11-22T', due_has_time = 1, reminder_offset_minutes = 0 WHERE id = ?")
+      .run(corrupt.id)
+    const valid = store.createTask(list.id, '有效提醒')
+    store.updateTask(valid.id, {
+      dueLocal: '2026-11-20T09:00',
+      dueHasTime: true,
+      reminderOffsetMinutes: 0,
+    })
+
+    await expect(scheduler.reconcile(new Date(2026, 10, 20, 9, 1))).resolves.toBeUndefined()
+    expect(notifier.taskNotifications.map(item => item.taskId)).toEqual([valid.id])
+  })
+})

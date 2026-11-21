@@ -99,3 +99,26 @@ describe('recurring task completion', () => {
     })
   })
 })
+
+
+describe('COUNT regression', () => {
+  it('finishes after three consecutive completions from the original series anchor', () => {
+    const store = openStore()
+    const list = store.createList('待办')
+    const created = store.createTask(list.id, '三次任务')
+    const task = store.updateTask(created.id, {
+      dueLocal: '2026-11-20',
+      recurrenceRule: 'FREQ=DAILY;COUNT=3',
+    })
+
+    const first = store.completeTask(task.id, new Date(2026, 10, 20, 10, 0))
+    const second = store.completeTask(task.id, new Date(2026, 10, 21, 10, 0))
+    const third = store.completeTask(task.id, new Date(2026, 10, 22, 10, 0))
+
+    expect(first?.dueLocal).toBe('2026-11-21')
+    expect(second?.dueLocal).toBe('2026-11-22')
+    expect(third?.completedAt).toBe(new Date(2026, 10, 22, 10, 0).toISOString())
+    expect(store.completeTask(task.id, new Date(2026, 10, 23, 10, 0))?.completedAt)
+      .toBe(third?.completedAt)
+  })
+})

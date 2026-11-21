@@ -105,3 +105,21 @@ describe('manual backup', () => {
     expect(target.store.listLists().map(item => item.id)).toEqual([preserved.id])
   })
 })
+
+
+describe('backup date invariants', () => {
+  it('rejects an inconsistent due date during preview', async () => {
+    const source = openStore()
+    const list = source.store.createList('个人')
+    source.store.createTask(list.id, '任务')
+    const filename = join(tempDirectory(), 'invalid-date.json')
+    await exportBackup(source.db, filename)
+    const backup = JSON.parse(readFileSync(filename, 'utf8'))
+    backup.data.tasks[0].dueLocal = '2026-11-22T'
+    backup.data.tasks[0].dueHasTime = true
+    writeFileSync(filename, JSON.stringify(backup))
+    const target = openStore()
+
+    await expect(previewBackup(target.db, filename)).rejects.toThrow('无效')
+  })
+})

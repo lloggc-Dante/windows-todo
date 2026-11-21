@@ -73,8 +73,8 @@ export const useTasksStore = defineStore('tasks', () => {
 
   async function completeTask(taskId: string): Promise<void> {
     if (!selectedListId.value) return
-    await window.appApi.completeTask(taskId)
-    if (selectedTaskId.value === taskId) selectedTaskId.value = null
+    const completed = await window.appApi.completeTask(taskId)
+    if (selectedTaskId.value === taskId && completed?.completedAt) selectedTaskId.value = null
     tasks.value = await window.appApi.listTasks(selectedListId.value)
   }
 

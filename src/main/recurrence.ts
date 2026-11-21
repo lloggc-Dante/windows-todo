@@ -62,15 +62,26 @@ export function nextOccurrence(task: Task, now = new Date()): Occurrence | null 
   if (!task.recurrenceRule || !task.dueLocal) return null
 
   const current = parseLocal(task.dueLocal)
+  const seriesStart = parseLocal(task.seriesStart ?? task.dueLocal)
   const currentTime = current.date.getTime()
   const nowTime = floatingNow(now).getTime()
   const after = new Date(Math.max(currentTime, nowTime))
   const until = new Date(after)
   until.setUTCFullYear(until.getUTCFullYear() + 100)
   const rule = rrulestr(task.recurrenceRule, {
-    dtstart: current.date,
+    dtstart: seriesStart.date,
   })
   const next = rule.between(after, until, false)[0]
 
   return next ? { local: formatLocal(next, task.dueHasTime), hasTime: task.dueHasTime } : null
+}
+
+
+export function assertValidRecurrenceRule(rule: string | null): void {
+  if (!rule) return
+  try {
+    rrulestr(rule, { dtstart: new Date(Date.UTC(2000, 0, 1)) })
+  } catch {
+    throw new Error('无效的重复规则')
+  }
 }

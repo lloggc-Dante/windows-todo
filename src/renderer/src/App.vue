@@ -22,6 +22,12 @@ let unsubscribe: (() => void) | undefined
 const settingsOpen = ref(false)
 
 onMounted(async () => {
+  store.$onAction(({ after, onError }) => {
+    after(() => { error.value = null })
+    onError(reason => {
+      error.value = reason instanceof Error ? reason.message : '操作失败'
+    })
+  })
   try {
     await store.initialize()
     unsubscribe = window.appApi.onSelectTask(taskId => {
@@ -65,6 +71,7 @@ onUnmounted(() => unsubscribe?.())
       @save="store.updateSelected"
       @move="store.moveTask"
       @remove="store.deleteTask"
+      @undo="store.undoCompletion"
     />
     <AdvancedSettings
       v-if="settingsOpen"
