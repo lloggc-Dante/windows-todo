@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import type { AppSettings } from '../../../../shared/contracts'
 import type { BackupPreview } from '../../../../shared/backup'
+import TimeField from './TimeField.vue'
 
 const emit = defineEmits<{
   close: []
@@ -100,7 +101,7 @@ async function confirmImport(): Promise<void> {
       </label>
       <label class="setting-row">
         <span>仅日期任务的提醒时间</span>
-        <input v-model="settings.dateOnlyReminderTime" type="time" @change="saveSetting('dateOnlyReminderTime')" />
+        <TimeField v-model="settings.dateOnlyReminderTime" aria-label="仅日期任务的提醒时间" @change="saveSetting('dateOnlyReminderTime')" />
       </label>
 
       <details data-testid="advanced-settings" class="advanced-settings">

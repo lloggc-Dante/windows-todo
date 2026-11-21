@@ -169,3 +169,8 @@ button, input, select { font: inherit; }
 .widget-header .widget-list-select { max-width: 165px; padding: 6px 11px; border-radius: 999px; font-size: 12px; }
 .widget-header .app-select-popover { width: 210px; right: auto; border-radius: 15px; }
 .widget-header .app-select-option { padding: 7px 9px; font-size: 12px; }
+
+* { scrollbar-width: thin; scrollbar-color: rgb(100 116 139 / 35%) transparent; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { border-radius: 999px; background: rgb(100 116 139 / 32%); }

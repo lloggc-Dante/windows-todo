@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import AppSelect from './AppSelect.vue'
+import DateField from './DateField.vue'
+import TimeField from './TimeField.vue'
 import type { List, Task, TaskCompletion, TaskPatch } from '../../../../shared/tasks'
 
 const props = defineProps<{
@@ -94,11 +96,11 @@ function save(): void {
       <label>备注</label>
       <textarea v-model="draft.notes" rows="5" placeholder="可选" />
       <label>截止日期（可选）</label>
-      <input v-model="draft.date" data-testid="due-date-input" type="date" />
+      <DateField v-model="draft.date" data-testid="due-date-input" aria-label="截止日期" />
       <label v-if="draft.date" class="inline-field">
         <input v-model="draft.hasTime" type="checkbox" /> 指定时间
       </label>
-      <input v-if="draft.date && draft.hasTime" v-model="draft.time" type="time" aria-label="截止时间" />
+      <TimeField v-if="draft.date && draft.hasTime" v-model="draft.time" aria-label="截止时间" />
       <template v-if="draft.date">
         <label>重复</label>
         <AppSelect
@@ -150,4 +152,16 @@ textarea { resize: vertical; }
 .save { background: #2563eb; color: white; }
 .delete { background: #fee2e2; color: #b91c1c; }
 .detail-placeholder { padding-top: 80px; color: #94a3b8; text-align: center; }
+</style>
+
+<style scoped>
+:deep(.date-input-row input), :deep(.time-input-row input) {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: rgb(255 255 255 / 72%);
+  font: inherit;
+}
 </style>

@@ -105,6 +105,11 @@ button, input, textarea, select { font: inherit; }
 .error-banner { position: absolute; z-index: 10; top: 48px; left: 50%; transform: translateX(-50%); padding: 10px 18px; border-radius: 8px; background: #fee2e2; color: #991b1b; }
 .settings-toggle { position: absolute; z-index: 12; top: 48px; right: 10px; width: 34px; height: 34px; border: 0; border-radius: 50%; background: transparent; color: #64748b; font-size: 18px; cursor: pointer; }
 .settings-toggle:hover { background: #e2e8f0; }
+* { scrollbar-width: thin; scrollbar-color: rgb(100 116 139 / 35%) transparent; }
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { border-radius: 999px; background: rgb(100 116 139 / 32%); }
+::-webkit-scrollbar-thumb:hover { background: rgb(100 116 139 / 52%); }
 input[type='checkbox'] {
   appearance: none;
   position: relative;
