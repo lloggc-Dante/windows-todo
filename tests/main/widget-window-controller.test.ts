@@ -10,7 +10,7 @@ class FakeSettings {
 }
 
 class FakeWindow {
-  bounds = { x: 0, y: 0, width: 520, height: 178 }
+  bounds = { x: 0, y: 0, width: 360, height: 178 }
   visible = false
   inactiveShown = false
   material: string | null = null
@@ -78,7 +78,7 @@ describe('WidgetWindowController', () => {
       skipTaskbar: true,
       resizable: false,
       roundedCorners: true,
-      width: 520,
+      width: 360,
       height: 178,
     })
     expect(windows[0].material).toBe('acrylic')
@@ -125,12 +125,12 @@ describe('WidgetWindowController', () => {
   it('clamps the saved position when display metrics change', () => {
     const { controller, settings, windows, displays, screenHandlers } = setup()
     settings.setSetting('widgetPosition', JSON.stringify({
-      displayId: 99, x: 5000, y: 5000, width: 520, height: 300,
+      displayId: 99, x: 5000, y: 5000, width: 400, height: 300,
     }))
     controller.initialize()
     displays[0].workArea = { x: 0, y: 0, width: 1000, height: 700 }
     screenHandlers.get('display-metrics-changed')?.()
-    expect(windows[0].bounds).toMatchObject({ x: 480, y: 400, width: 520, height: 300 })
+    expect(windows[0].bounds).toMatchObject({ x: 600, y: 400, width: 400, height: 300 })
   })
 })
 
@@ -165,13 +165,13 @@ describe('widget review regressions', () => {
   it.each(['display-added', 'display-removed'])('clamps after %s', event => {
     const { controller, settings, windows, screenHandlers } = setup()
     settings.setSetting('widgetPosition', JSON.stringify({
-      displayId: 99, x: 5000, y: 5000, width: 520, height: 300,
+      displayId: 99, x: 5000, y: 5000, width: 400, height: 300,
     }))
     controller.initialize()
 
     screenHandlers.get(event)?.()
 
-    expect(windows[0].bounds).toMatchObject({ x: 1400, y: 780, height: 300 })
+    expect(windows[0].bounds).toMatchObject({ x: 1520, y: 780, height: 300 })
   })
 })
 
@@ -185,5 +185,16 @@ describe('continuous native movement', () => {
     await new Promise(resolve => setTimeout(resolve, 160))
 
     expect(JSON.parse(settings.getSetting('widgetPosition')!)).toMatchObject({ x: 340, y: 220 })
+  })
+})
+
+
+describe('widget width persistence', () => {
+  it('clamps and saves a resized width', () => {
+    const { controller, settings, windows } = setup()
+    controller.initialize()
+    controller.setWidth(481)
+    expect(windows[0].bounds.width).toBe(480)
+    expect(JSON.parse(settings.getSetting('widgetPosition')!).width).toBe(480)
   })
 })

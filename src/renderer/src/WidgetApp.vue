@@ -69,6 +69,21 @@ async function reorder(ids: string[]): Promise<void> {
   }
 }
 
+function beginResize(event: PointerEvent): void {
+  event.preventDefault()
+  const startX = event.clientX
+  const startWidth = document.documentElement.clientWidth
+  const onMove = (moveEvent: PointerEvent): void => {
+    void window.appApi.setWidgetWidth(startWidth + moveEvent.clientX - startX)
+  }
+  const onUp = (): void => {
+    window.removeEventListener('pointermove', onMove)
+    window.removeEventListener('pointerup', onUp)
+  }
+  window.addEventListener('pointermove', onMove)
+  window.addEventListener('pointerup', onUp)
+}
+
 async function addTask(): Promise<void> {
   if (!title.value.trim()) return
   const value = title.value
@@ -123,6 +138,7 @@ async function selectList(event: Event): Promise<void> {
       />
       <button type="submit" aria-label="贴片添加">＋</button>
     </form>
+    <div class="widget-resize-handle no-drag" data-testid="widget-resize-handle" @pointerdown="beginResize"></div>
     <div v-if="actionError" class="widget-error" role="status">{{ actionError }}</div>
   </main>
 </template>

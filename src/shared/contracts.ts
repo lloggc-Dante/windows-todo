@@ -32,6 +32,7 @@ export interface AppApi {
   replaceFromBackup(): Promise<void>
   getWidgetPresentation(): Promise<WidgetPresentation>
   setWidgetTaskCount(count: number): Promise<void>
+  setWidgetWidth(width: number): Promise<void>
   hideWidget(): Promise<void>
   openMainWindow(): Promise<void>
   getWidgetSelectedList(): Promise<string | null>

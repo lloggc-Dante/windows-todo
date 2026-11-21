@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   restoreWidgetPosition,
   resolveWidgetPresentation,
+  clampWidgetWidth,
   widgetHeight,
   widgetRows,
 } from '../../src/shared/widget'
@@ -48,13 +49,22 @@ describe('position restoration', () => {
 
   it('keeps a saved position on its original display', () => {
     expect(restoreWidgetPosition({
-      displayId: 2, x: 2100, y: 200, width: 520, height: 300,
-    }, displays)).toEqual({ displayId: 2, x: 2100, y: 200, width: 520, height: 300 })
+      displayId: 2, x: 2100, y: 200, width: 400, height: 300,
+    }, displays)).toEqual({ displayId: 2, x: 2100, y: 200, width: 400, height: 300 })
   })
 
   it('falls back to an existing display and clamps the widget into its work area', () => {
     expect(restoreWidgetPosition({
-      displayId: 99, x: 9999, y: -50, width: 520, height: 300,
-    }, displays)).toEqual({ displayId: 1, x: 1400, y: 0, width: 520, height: 300 })
+      displayId: 99, x: 9999, y: -50, width: 400, height: 300,
+    }, displays)).toEqual({ displayId: 1, x: 1520, y: 0, width: 400, height: 300 })
+  })
+})
+
+
+describe('widget width', () => {
+  it('clamps custom widths into the supported range', () => {
+    expect(clampWidgetWidth(319)).toBe(320)
+    expect(clampWidgetWidth(360)).toBe(360)
+    expect(clampWidgetWidth(481)).toBe(480)
   })
 })

@@ -15,6 +15,9 @@ import { registerWidgetIpc } from './widget-ipc'
 import { resolveWidgetPresentation } from '../shared/widget'
 
 app.setAppUserModelId('com.windows-todo.app')
+if (process.env.WINDOWS_TODO_TEST_DATA_DIR) {
+  app.setPath('userData', process.env.WINDOWS_TODO_TEST_DATA_DIR)
+}
 
 function startApplication(): void {
   const window = new BrowserWindow({

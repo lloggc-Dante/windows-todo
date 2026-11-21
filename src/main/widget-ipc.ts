@@ -15,6 +15,10 @@ export function registerWidgetIpc(
     }
     widget.setTaskCount(count)
   })
+  ipcMain.handle('widget:set-width', (_event, width) => {
+    if (typeof width !== 'number' || !Number.isFinite(width)) throw new Error('贴片宽度无效')
+    widget.setWidth(width)
+  })
   ipcMain.handle('widget:hide', () => widget.hide())
   ipcMain.handle('widget:open-main', () => mainWindow.showMainWindow())
   ipcMain.handle('widget:get-selected-list', () => store.getSetting('widgetSelectedList'))

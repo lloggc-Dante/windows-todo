@@ -3,7 +3,7 @@ import type {
   WidgetPosition,
   WidgetPresentation,
 } from '../shared/widget'
-import { restoreWidgetPosition, widgetHeight, WIDGET_WIDTH } from '../shared/widget'
+import { restoreWidgetPosition, widgetHeight } from '../shared/widget'
 
 interface SettingsStore {
   getSetting(key: string): string | null
@@ -57,7 +57,7 @@ export class WidgetWindowController {
     this.window = this.options.createWindow({
       x: initialPosition.x,
       y: initialPosition.y,
-      width: WIDGET_WIDTH,
+      width: initialPosition.width,
       height: widgetHeight(this.taskCount),
       show: false,
       frame: false,
@@ -92,6 +92,19 @@ export class WidgetWindowController {
       ...bounds,
       displayId: display.id,
       height: widgetHeight(count),
+    }, this.options.screen.getAllDisplays())
+    this.window.setBounds(restored)
+    this.persistPosition()
+  }
+
+  setWidth(width: number): void {
+    if (!this.window) return
+    const bounds = this.window.getBounds()
+    const display = this.options.screen.getDisplayMatching(bounds)
+    const restored = restoreWidgetPosition({
+      ...bounds,
+      displayId: display.id,
+      width,
     }, this.options.screen.getAllDisplays())
     this.window.setBounds(restored)
     this.persistPosition()
@@ -140,7 +153,7 @@ export class WidgetWindowController {
     this.window.setBounds({
       x: this.position.x,
       y: this.position.y,
-      width: WIDGET_WIDTH,
+      width: this.position.width,
       height: this.position.height,
     })
     this.persistPosition()

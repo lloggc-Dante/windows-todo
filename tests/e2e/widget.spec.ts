@@ -80,3 +80,30 @@ test('keeps all nine task rows inside an eight-row scrolling viewport', async ()
   expect(windowHeight).toBeGreaterThanOrEqual(472)
   expect(windowHeight).toBeLessThanOrEqual(473)
 })
+
+
+test('resizes from the right edge and restores width after restart', async () => {
+  expect(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()
+    .find(item => item.webContents.getURL().includes('widget.html'))?.getBounds().width)).toBe(360)
+  const handle = await widget.getByTestId('widget-resize-handle').boundingBox()
+  if (!handle) throw new Error('贴片缩放手柄不可见')
+  await widget.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2)
+  await widget.mouse.down()
+  await widget.mouse.move(handle.x + handle.width / 2 + 60, handle.y + handle.height / 2)
+  await widget.mouse.up()
+  await expect.poll(async () => {
+    const width = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()
+      .find(item => item.webContents.getURL().includes('widget.html'))?.getBounds().width)
+    return Math.abs((width ?? 0) - 420) <= 1
+  }).toBe(true)
+
+  await app.close()
+  app = await electron.launch({ args: ['.'], env: { ...process.env, WINDOWS_TODO_TEST_DATA_DIR: dataDirectory } })
+  await expect.poll(() => app.windows().length).toBe(2)
+  main = app.windows().find(page => !page.url().includes('widget.html'))!
+  widget = app.windows().find(page => page.url().includes('widget.html'))!
+  const restoredWidth = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()
+    .find(item => item.webContents.getURL().includes('widget.html'))?.getBounds().width)
+  expect(restoredWidth).toBeGreaterThanOrEqual(419)
+  expect(restoredWidth).toBeLessThanOrEqual(421)
+})

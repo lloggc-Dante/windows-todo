@@ -24,6 +24,7 @@ const api: AppApi = {
   replaceFromBackup: () => ipcRenderer.invoke('backup:replace'),
   getWidgetPresentation: () => ipcRenderer.invoke('widget:get-presentation'),
   setWidgetTaskCount: count => ipcRenderer.invoke('widget:set-task-count', count),
+  setWidgetWidth: width => ipcRenderer.invoke('widget:set-width', width),
   hideWidget: () => ipcRenderer.invoke('widget:hide'),
   openMainWindow: () => ipcRenderer.invoke('widget:open-main'),
   getWidgetSelectedList: () => ipcRenderer.invoke('widget:get-selected-list'),
