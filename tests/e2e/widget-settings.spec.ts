@@ -137,5 +137,5 @@ test('backup replacement reapplies widget visibility, position, and selected lis
     const window = BrowserWindow.getAllWindows().find(item => item.webContents.getURL().includes('widget.html'))
     return window?.getBounds().x
   })).toBe(123)
-  await expect(widget.getByTestId('widget-list-select')).toHaveValue(list.id)
+  await expect(widget.getByTestId('widget-list-select')).toContainText('备份清单')
 })

@@ -28,7 +28,8 @@ test.afterEach(async () => {
 
 test('preserves COUNT when editing an unrelated task field', async () => {
   await page.getByTestId('due-date-input').fill('2026-11-22')
-  await page.getByLabel('重复规则').selectOption('DAILY')
+  await page.getByRole('button', { name: '重复规则' }).click()
+  await page.getByRole('option', { name: '每天', exact: true }).click()
   await page.getByRole('button', { name: '保存', exact: true }).click()
   await page.evaluate(async () => {
     const list = (await window.appApi.listLists())[0]
@@ -49,7 +50,8 @@ test('preserves COUNT when editing an unrelated task field', async () => {
 
 test('shows recurring completion history and undo in the task detail', async () => {
   await page.getByTestId('due-date-input').fill('2026-11-22')
-  await page.getByLabel('重复规则').selectOption('DAILY')
+  await page.getByRole('button', { name: '重复规则' }).click()
+  await page.getByRole('option', { name: '每天', exact: true }).click()
   await page.getByRole('button', { name: '保存', exact: true }).click()
   await page.getByRole('button', { name: '完成任务' }).click()
 

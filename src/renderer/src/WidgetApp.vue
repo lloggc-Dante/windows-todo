@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { widgetRows } from '../../shared/widget'
 import type { WidgetPresentation } from '../../shared/widget'
 import WidgetTaskList from './components/WidgetTaskList.vue'
+import AppSelect from './components/AppSelect.vue'
 import { useTasksStore } from './stores/tasks'
 
 const store = useTasksStore()
@@ -17,6 +18,7 @@ const presentation = ref<WidgetPresentation>({
 const title = ref('')
 const actionError = ref('')
 const listHeight = computed(() => widgetRows(activeTasks.value.length) * 42)
+const listOptions = computed(() => lists.value.map(list => ({ value: list.id, label: list.name })))
 let unsubscribe: (() => void) | undefined
 
 watch(() => activeTasks.value.length, async count => {
@@ -96,8 +98,7 @@ async function addTask(): Promise<void> {
   }
 }
 
-async function selectList(event: Event): Promise<void> {
-  const listId = (event.target as HTMLSelectElement).value
+async function selectList(listId: string): Promise<void> {
   await store.selectList(listId)
   await window.appApi.setWidgetSelectedList(listId)
 }
@@ -107,15 +108,14 @@ async function selectList(event: Event): Promise<void> {
   <main class="widget-shell" :class="`mode-${presentation.mode}`" data-testid="desktop-widget">
     <header class="widget-header">
       <span class="widget-grip" aria-hidden="true">⠿</span>
-      <select
+      <AppSelect
+        :model-value="selectedListId ?? ''"
+        :options="listOptions"
         class="no-drag widget-list-select"
         data-testid="widget-list-select"
         aria-label="贴片清单"
-        :value="selectedListId"
-        @change="selectList"
-      >
-        <option v-for="list in lists" :key="list.id" :value="list.id">{{ list.name }}</option>
-      </select>
+        @update:model-value="selectList"
+      />
       <span class="widget-count">{{ activeTasks.length }} 项</span>
       <button class="no-drag widget-menu-button" type="button" title="打开主窗口" @click="openMain">↗</button>
       <button class="no-drag widget-menu-button" type="button" title="隐藏贴片" @click="hideWidget">×</button>

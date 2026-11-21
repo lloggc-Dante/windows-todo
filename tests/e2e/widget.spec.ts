@@ -48,12 +48,14 @@ test('adds, completes, switches lists, and reorders with live main-window sync',
 
   await main.getByLabel('新清单名称').fill('其他清单')
   await main.getByRole('button', { name: '添加清单' }).click()
-  await expect(widget.getByTestId('widget-list-select')).toContainText('其他清单')
-  await widget.getByTestId('widget-list-select').selectOption({ label: '其他清单' })
+  await widget.getByTestId('widget-list-select').click()
+  await expect(widget.getByRole('option', { name: '其他清单', exact: true })).toBeVisible()
+  await widget.getByRole('option', { name: '其他清单', exact: true }).click()
   await addWidgetTask('新清单任务')
   await expect(main.locator('[data-task-title]')).toHaveText(['新清单任务'])
 
-  await widget.getByTestId('widget-list-select').selectOption({ label: '我的待办' })
+  await widget.getByTestId('widget-list-select').click()
+  await widget.getByRole('option', { name: '我的待办', exact: true }).click()
   await addWidgetTask('任务四')
   const source = widget.locator('.widget-task-row').filter({ hasText: '任务一' })
   const target = widget.locator('.widget-task-row').filter({ hasText: '任务四' })

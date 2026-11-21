@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
+import AppSelect from './AppSelect.vue'
 import type { List, Task, TaskCompletion, TaskPatch } from '../../../../shared/tasks'
 
 const props = defineProps<{
@@ -12,6 +13,22 @@ const emit = defineEmits<{
   remove: [taskId: string]
   undo: [taskId: string]
 }>()
+const listOptions = computed(() => props.lists.map(list => ({ value: list.id, label: list.name })))
+const recurrenceOptions = [
+  { value: '', label: '不重复' },
+  { value: 'DAILY', label: '每天' },
+  { value: 'WEEKLY', label: '每周' },
+  { value: 'MONTHLY', label: '每月' },
+  { value: 'YEARLY', label: '每年' },
+]
+const reminderOptions = [
+  { value: '', label: '不提醒' },
+  { value: '0', label: '到期时' },
+  { value: '5', label: '提前 5 分钟' },
+  { value: '30', label: '提前 30 分钟' },
+  { value: '60', label: '提前 1 小时' },
+  { value: '1440', label: '提前 1 天' },
+]
 const draft = reactive({
   title: '',
   notes: '',
@@ -66,9 +83,12 @@ function save(): void {
     <template v-if="task">
       <h2>任务详情</h2>
       <label>清单</label>
-      <select :value="task.listId" aria-label="所属清单" @change="emit('move', task.id, ($event.target as HTMLSelectElement).value)">
-        <option v-for="list in lists" :key="list.id" :value="list.id">{{ list.name }}</option>
-      </select>
+      <AppSelect
+        :model-value="task.listId"
+        :options="listOptions"
+        aria-label="所属清单"
+        @update:model-value="emit('move', task.id, $event)"
+      />
       <label>标题</label>
       <input v-model="draft.title" data-testid="task-title-input" />
       <label>备注</label>
@@ -81,22 +101,18 @@ function save(): void {
       <input v-if="draft.date && draft.hasTime" v-model="draft.time" type="time" aria-label="截止时间" />
       <template v-if="draft.date">
         <label>重复</label>
-        <select v-model="draft.recurrence" aria-label="重复规则" @change="recurrenceDirty = true">
-          <option value="">不重复</option>
-          <option value="DAILY">每天</option>
-          <option value="WEEKLY">每周</option>
-          <option value="MONTHLY">每月</option>
-          <option value="YEARLY">每年</option>
-        </select>
+        <AppSelect
+          v-model="draft.recurrence"
+          :options="recurrenceOptions"
+          aria-label="重复规则"
+          @change="recurrenceDirty = true"
+        />
         <label>提醒</label>
-        <select v-model="draft.reminder" aria-label="提醒时间">
-          <option value="">不提醒</option>
-          <option value="0">到期时</option>
-          <option value="5">提前 5 分钟</option>
-          <option value="30">提前 30 分钟</option>
-          <option value="60">提前 1 小时</option>
-          <option value="1440">提前 1 天</option>
-        </select>
+        <AppSelect
+          v-model="draft.reminder"
+          :options="reminderOptions"
+          aria-label="提醒时间"
+        />
       </template>
       <section class="completion-history" data-testid="completion-history">
         <h3>完成历史</h3>
