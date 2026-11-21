@@ -1,0 +1,24 @@
+appId: com.windows-todo.app
+productName: 轻待办
+copyright: ""
+directories:
+  output: release
+files:
+  - out/**/*
+  - package.json
+asarUnpack:
+  - "**/*.node"
+npmRebuild: true
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  artifactName: ${productName}-Setup-${version}-${arch}.${ext}
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: 轻待办

@@ -2,6 +2,7 @@
   "name": "windows-todo",
   "version": "0.1.0",
   "private": true,
+  "description": "单机离线 Windows 待办事项应用",
   "type": "module",
   "main": "./out/main/index.js",
   "scripts": {
@@ -9,7 +10,8 @@
     "build": "electron-vite build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "dist": "npm run build && electron-builder --config electron-builder.yml"
   },
   "dependencies": {
     "better-sqlite3": "^13.2.0",
@@ -23,9 +25,11 @@
     "@types/node": "^26.6.6",
     "@vitejs/plugin-vue": "^6.0.11",
     "electron": "^45.4.1",
+    "electron-builder": "^26.18.0",
     "electron-vite": "^6.0.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.8",
-    "vitest": "^5.1.1"
+    "vitest": "^5.1.1",
+    "yaml": "^2.9.1"
   }
 }
