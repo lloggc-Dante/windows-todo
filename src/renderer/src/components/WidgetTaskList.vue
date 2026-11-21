@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import type { Task } from '../../../../shared/tasks'
+import { resolveWidgetReorder } from '../../../shared/widget'
 
 const props = defineProps<{
   tasks: Task[]
+  listId: string | null
   listHeight: number
 }>()
 const emit = defineEmits<{
@@ -15,15 +17,15 @@ function startDrag(taskId: string, event: DragEvent): void {
   if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'
 }
 
-function drop(targetId: string, event: DragEvent): void {
+async function drop(targetId: string, event: DragEvent): Promise<void> {
   const draggedId = event.dataTransfer?.getData('text/widget-task-id')
-  if (!draggedId || draggedId === targetId) return
-  const ids = props.tasks.map(task => task.id)
-  const from = ids.indexOf(draggedId)
-  const target = ids.indexOf(targetId)
-  if (from < 0 || target < 0) return
-  ids.splice(from, 1)
-  ids.splice(target, 0, draggedId)
+  if (!draggedId || draggedId === targetId || !props.listId) return
+  const listId = props.listId
+  const ids = await resolveWidgetReorder(
+    draggedId,
+    targetId,
+    () => window.appApi.listTasks(listId),
+  )
   emit('reorder', ids)
 }
 </script>

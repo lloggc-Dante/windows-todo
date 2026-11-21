@@ -31,7 +31,7 @@ import { registerTaskIpc } from '../../src/main/ipc'
 
 let db: Database.Database
 let store: TaskStore
-let broadcast: Mock<() => void>
+let broadcast: Mock<(excludeSenderId?: number) => void>
 let directory: string
 
 beforeEach(() => {
@@ -59,7 +59,7 @@ afterEach(() => {
 async function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
   const handler = mockState.handlers.get(channel)
   if (!handler) throw new Error(`Missing handler ${channel}`)
-  return await handler({}, ...args) as T
+  return await handler({ sender: { id: 1 } }, ...args) as T
 }
 
 async function expectOneBroadcast(action: () => Promise<unknown>): Promise<void> {

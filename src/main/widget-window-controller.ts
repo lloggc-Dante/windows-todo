@@ -13,7 +13,7 @@ interface SettingsStore {
 interface ScreenService {
   getAllDisplays(): DisplayInfo[]
   getDisplayMatching(bounds: { x: number; y: number; width: number; height: number }): DisplayInfo
-  on(event: 'display-metrics-changed', handler: () => void): void
+  on(event: 'display-metrics-changed' | 'display-added' | 'display-removed', handler: () => void): void
 }
 
 interface WidgetWindow {
@@ -23,6 +23,7 @@ interface WidgetWindow {
   show(): void
   showInactive(): void
   hide(): void
+  isVisible(): boolean
   on(event: string, handler: (event?: { preventDefault(): void }) => void): void
 }
 
@@ -75,35 +76,45 @@ export class WidgetWindowController {
       this.hide()
     })
     this.options.screen.on('display-metrics-changed', () => this.clampToDisplays())
+    this.options.screen.on('display-added', () => this.clampToDisplays())
+    this.options.screen.on('display-removed', () => this.clampToDisplays())
     this.options.loadWindow(this.window)
   }
 
   setTaskCount(count: number): void {
     this.taskCount = count
     if (!this.window) return
-    this.window.setBounds({ ...this.window.getBounds(), width: WIDGET_WIDTH, height: widgetHeight(count) })
+    const bounds = this.window.getBounds()
+    const display = this.options.screen.getDisplayMatching(bounds)
+    const restored = restoreWidgetPosition({
+      ...bounds,
+      displayId: display.id,
+      height: widgetHeight(count),
+    }, this.options.screen.getAllDisplays())
+    this.window.setBounds(restored)
     this.persistPosition()
   }
 
   show(inactive = false): void {
     this.initialize()
     this.options.settings.setSetting('widgetVisible', 'true')
+    if (this.window?.isVisible()) return
     if (inactive) this.window?.showInactive()
     else this.window?.show()
   }
 
   hide(): void {
     this.options.settings.setSetting('widgetVisible', 'false')
-    this.window?.hide()
+    if (this.window?.isVisible()) this.window.hide()
   }
 
   applySettings(): void {
     this.clampToDisplays()
     if (this.options.settings.getSetting('widgetVisible') === 'false') {
-      this.window?.hide()
+      if (this.window?.isVisible()) this.hide()
       return
     }
-    this.show(this.options.hidden)
+    if (!this.window?.isVisible()) this.show(this.options.hidden)
   }
 
   allowQuit(): void {

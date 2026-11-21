@@ -46,9 +46,9 @@ function taskPatch(value: unknown): TaskPatch {
   return patch
 }
 
-function broadcastTasksChanged(): void {
+function broadcastTasksChanged(excludeSenderId?: number): void {
   for (const window of BrowserWindow.getAllWindows()) {
-    window.webContents.send('tasks:changed')
+    if (window.webContents.id !== excludeSenderId) window.webContents.send('tasks:changed')
   }
 }
 
@@ -58,52 +58,55 @@ export function registerTaskIpc(
   scheduler: ReminderScheduler,
   integration: WindowsIntegration,
   window: BrowserWindow,
-  broadcast: () => void = broadcastTasksChanged,
+  broadcast: (excludeSenderId?: number) => void = broadcastTasksChanged,
   applyWidgetSettings: () => void = () => undefined,
 ): void {
   let pendingBackupPath: string | null = null
   const ensureDefaultList = (): void => {
     if (store.listLists().length === 0) store.createList('我的待办')
   }
-  const changed = async <T>(operation: () => T): Promise<T> => {
+  const changed = async <T>(
+    operation: () => T,
+    event: { sender: { id: number } },
+  ): Promise<T> => {
     const result = operation()
-    broadcast()
+    broadcast(event.sender.id)
     await scheduler.reschedule()
     return result
   }
 
   ipcMain.handle('lists:list', () => store.listLists())
-  ipcMain.handle('lists:create', (_event, name) =>
-    changed(() => store.createList(stringValue(name, '清单名称'))))
-  ipcMain.handle('lists:rename', (_event, id, name) =>
-    changed(() => store.renameList(stringValue(id, '清单ID'), stringValue(name, '清单名称'))))
-  ipcMain.handle('lists:delete', (_event, id) =>
+  ipcMain.handle('lists:create', (event, name) =>
+    changed(() => store.createList(stringValue(name, '清单名称')), event))
+  ipcMain.handle('lists:rename', (event, id, name) =>
+    changed(() => store.renameList(stringValue(id, '清单ID'), stringValue(name, '清单名称')), event))
+  ipcMain.handle('lists:delete', (event, id) =>
     changed(() => {
       store.deleteList(stringValue(id, '清单ID'))
       ensureDefaultList()
-    }))
+    }, event))
   ipcMain.handle('tasks:list', (_event, listId) => store.listTasks(stringValue(listId, '清单ID')))
-  ipcMain.handle('tasks:create', (_event, listId, title) =>
-    changed(() => store.createTask(stringValue(listId, '清单ID'), stringValue(title, '标题'))))
-  ipcMain.handle('tasks:update', (_event, id, patch) =>
-    changed(() => store.updateTask(stringValue(id, '任务ID'), taskPatch(patch))))
-  ipcMain.handle('tasks:delete', (_event, id) =>
-    changed(() => store.deleteTask(stringValue(id, '任务ID'))))
-  ipcMain.handle('tasks:reorder', (_event, listId, ids) => {
+  ipcMain.handle('tasks:create', (event, listId, title) =>
+    changed(() => store.createTask(stringValue(listId, '清单ID'), stringValue(title, '标题')), event))
+  ipcMain.handle('tasks:update', (event, id, patch) =>
+    changed(() => store.updateTask(stringValue(id, '任务ID'), taskPatch(patch)), event))
+  ipcMain.handle('tasks:delete', (event, id) =>
+    changed(() => store.deleteTask(stringValue(id, '任务ID')), event))
+  ipcMain.handle('tasks:reorder', (event, listId, ids) => {
     if (!Array.isArray(ids) || ids.some(id => typeof id !== 'string')) {
       throw new Error('任务顺序格式无效')
     }
-    return changed(() => store.reorderTasks(stringValue(listId, '清单ID'), ids))
+    return changed(() => store.reorderTasks(stringValue(listId, '清单ID'), ids), event)
   })
-  ipcMain.handle('tasks:move', (_event, taskId, listId) =>
+  ipcMain.handle('tasks:move', (event, taskId, listId) =>
     changed(() => store.moveTaskToList(
       stringValue(taskId, '任务ID'),
       stringValue(listId, '清单ID'),
-    )))
-  ipcMain.handle('tasks:complete', (_event, taskId) =>
-    changed(() => store.completeTask(stringValue(taskId, '任务ID'), new Date())))
-  ipcMain.handle('tasks:undo-completion', (_event, taskId) =>
-    changed(() => store.undoLatestCompletion(stringValue(taskId, '任务ID'))))
+    ), event))
+  ipcMain.handle('tasks:complete', (event, taskId) =>
+    changed(() => store.completeTask(stringValue(taskId, '任务ID'), new Date()), event))
+  ipcMain.handle('tasks:undo-completion', (event, taskId) =>
+    changed(() => store.undoLatestCompletion(stringValue(taskId, '任务ID')), event))
   ipcMain.handle('tasks:completions', (_event, taskId) =>
     store.listCompletions(stringValue(taskId, '任务ID')))
 
@@ -127,7 +130,7 @@ export function registerTaskIpc(
     pendingBackupPath = result.filePaths[0]
     return previewBackup(db, pendingBackupPath)
   })
-  ipcMain.handle('backup:replace', async () => {
+  ipcMain.handle('backup:replace', async event => {
     if (!pendingBackupPath) throw new Error('请先选择备份文件')
     await replaceFromBackup(db, pendingBackupPath)
     pendingBackupPath = null
@@ -135,7 +138,7 @@ export function registerTaskIpc(
     integration.setCloseToTray(store.getSetting('closeToTray') !== 'false')
     integration.setAutoStart(store.getSetting('autoStart') === 'true')
     applyWidgetSettings()
-    broadcast()
+    broadcast(event.sender.id)
     await scheduler.reschedule()
   })
 

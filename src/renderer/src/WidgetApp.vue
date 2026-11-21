@@ -15,6 +15,7 @@ const presentation = ref<WidgetPresentation>({
   backgroundMaterial: 'none',
 })
 const title = ref('')
+const actionError = ref('')
 const listHeight = computed(() => widgetRows(activeTasks.value.length) * 42)
 let unsubscribe: (() => void) | undefined
 
@@ -46,11 +47,38 @@ onMounted(async () => {
 
 onUnmounted(() => unsubscribe?.())
 
+function errorText(reason: unknown): string {
+  return reason instanceof Error ? reason.message : '操作失败，请重试'
+}
+
+function openMain(): void {
+  void window.appApi.openMainWindow()
+}
+
+function hideWidget(): void {
+  void window.appApi.hideWidget()
+}
+
+async function reorder(ids: string[]): Promise<void> {
+  try {
+    actionError.value = ''
+    await store.reorder(ids)
+  } catch (reason) {
+    actionError.value = errorText(reason)
+    await store.refresh()
+  }
+}
+
 async function addTask(): Promise<void> {
   if (!title.value.trim()) return
   const value = title.value
-  title.value = ''
-  await store.addTask(value)
+  try {
+    actionError.value = ''
+    await store.addTask(value)
+    title.value = ''
+  } catch (reason) {
+    actionError.value = errorText(reason)
+  }
 }
 
 async function selectList(event: Event): Promise<void> {
@@ -74,15 +102,16 @@ async function selectList(event: Event): Promise<void> {
         <option v-for="list in lists" :key="list.id" :value="list.id">{{ list.name }}</option>
       </select>
       <span class="widget-count">{{ activeTasks.length }} 项</span>
-      <button class="no-drag widget-menu-button" type="button" title="打开主窗口" @click="window.appApi.openMainWindow">↗</button>
-      <button class="no-drag widget-menu-button" type="button" title="隐藏贴片" @click="window.appApi.hideWidget">×</button>
+      <button class="no-drag widget-menu-button" type="button" title="打开主窗口" @click="openMain">↗</button>
+      <button class="no-drag widget-menu-button" type="button" title="隐藏贴片" @click="hideWidget">×</button>
     </header>
 
     <WidgetTaskList
       :tasks="activeTasks"
+      :list-id="selectedListId"
       :list-height="listHeight"
       @complete="store.completeTask"
-      @reorder="store.reorder"
+      @reorder="reorder"
     />
 
     <form class="widget-composer no-drag" @submit.prevent="addTask">
@@ -94,5 +123,6 @@ async function selectList(event: Event): Promise<void> {
       />
       <button type="submit" aria-label="贴片添加">＋</button>
     </form>
+    <div v-if="actionError" class="widget-error" role="status">{{ actionError }}</div>
   </main>
 </template>

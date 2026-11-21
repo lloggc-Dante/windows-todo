@@ -22,9 +22,10 @@ onMounted(async () => {
   Object.assign(settings, await window.appApi.getSettings())
 })
 
-async function saveSettings(): Promise<void> {
+async function saveSetting(key: keyof AppSettings): Promise<void> {
   try {
-    Object.assign(settings, await window.appApi.updateSettings({ ...settings }))
+    const patch = { [key]: settings[key] } as Partial<AppSettings>
+    Object.assign(settings, await window.appApi.updateSettings(patch))
   } catch (reason) {
     status.value = failureMessage(reason)
   }
@@ -83,23 +84,23 @@ async function confirmImport(): Promise<void> {
       </header>
       <label class="setting-row">
         <span>显示桌面贴片</span>
-        <input v-model="settings.showWidget" type="checkbox" @change="saveSettings" />
+        <input v-model="settings.showWidget" type="checkbox" @change="saveSetting('showWidget')" />
       </label>
       <label class="setting-row">
         <span>关闭窗口时隐藏到托盘</span>
-        <input v-model="settings.closeToTray" type="checkbox" @change="saveSettings" />
+        <input v-model="settings.closeToTray" type="checkbox" @change="saveSetting('closeToTray')" />
       </label>
       <label class="setting-row">
         <span>登录 Windows 后自动启动</span>
-        <input v-model="settings.autoStart" type="checkbox" @change="saveSettings" />
+        <input v-model="settings.autoStart" type="checkbox" @change="saveSetting('autoStart')" />
       </label>
       <label class="setting-row">
         <span>启用 Windows 系统通知</span>
-        <input v-model="settings.notificationsEnabled" type="checkbox" @change="saveSettings" />
+        <input v-model="settings.notificationsEnabled" type="checkbox" @change="saveSetting('notificationsEnabled')" />
       </label>
       <label class="setting-row">
         <span>仅日期任务的提醒时间</span>
-        <input v-model="settings.dateOnlyReminderTime" type="time" @change="saveSettings" />
+        <input v-model="settings.dateOnlyReminderTime" type="time" @change="saveSetting('dateOnlyReminderTime')" />
       </label>
 
       <details data-testid="advanced-settings" class="advanced-settings">

@@ -33,7 +33,10 @@ test.beforeEach(() => {
 })
 
 test.afterEach(async () => {
-  if (app) await app.close()
+  if (app) {
+    await app.evaluate(({ app: electronApp }) => electronApp.setLoginItemSettings({ openAtLogin: false })).catch(() => undefined)
+    await app.close()
+  }
   for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true })
 })
 
@@ -56,6 +59,37 @@ test('show widget setting hides, reopens, and survives restart', async () => {
     BrowserWindow.getAllWindows().find(item => item.webContents.getURL().includes('widget.html'))?.isVisible())).toBe(false)
   await main.getByTestId('settings-toggle').click()
   await expect(main.getByLabel('显示桌面贴片')).not.toBeChecked()
+})
+
+test('widget buttons open the main window and hide the widget', async () => {
+  await launch()
+  await app.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows().find(item => !item.webContents.getURL().includes('widget.html'))?.hide()
+  })
+  await widget.getByTitle('打开主窗口').click()
+  await expect.poll(() => app.evaluate(({ BrowserWindow }) =>
+    BrowserWindow.getAllWindows().find(item => !item.webContents.getURL().includes('widget.html'))?.isFocused())).toBe(true)
+
+  await widget.getByTitle('隐藏贴片').click()
+  await expect.poll(() => app.evaluate(({ BrowserWindow }) =>
+    BrowserWindow.getAllWindows().find(item => item.webContents.getURL().includes('widget.html'))?.isVisible())).toBe(false)
+  await expect.poll(() => main.evaluate(async () => (await window.appApi.getSettings()).showWidget)).toBe(false)
+})
+
+test('unrelated settings keep main-window focus and do not revive a hidden widget', async () => {
+  await launch()
+  await main.getByTestId('settings-toggle').click()
+  await main.getByLabel('启用 Windows 系统通知').uncheck()
+  await expect.poll(() => app.evaluate(({ BrowserWindow }) =>
+    BrowserWindow.getAllWindows().find(item => !item.webContents.getURL().includes('widget.html'))?.isFocused())).toBe(true)
+
+  await main.getByRole('button', { name: '关闭设置' }).click()
+  await widget.getByTitle('隐藏贴片').click()
+  await main.getByTestId('settings-toggle').click()
+  await main.getByLabel('登录 Windows 后自动启动').check()
+  await expect.poll(() => app.evaluate(({ BrowserWindow }) =>
+    BrowserWindow.getAllWindows().find(item => item.webContents.getURL().includes('widget.html'))?.isVisible())).toBe(false)
+  await main.getByLabel('登录 Windows 后自动启动').uncheck()
 })
 
 test('backup replacement reapplies widget visibility, position, and selected list', async () => {

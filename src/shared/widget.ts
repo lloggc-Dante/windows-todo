@@ -78,3 +78,21 @@ export function restoreWidgetPosition(
     height,
   }
 }
+
+
+export async function resolveWidgetReorder(
+  draggedId: string,
+  targetId: string,
+  loadLatestTasks: () => Promise<Array<{ id: string; completedAt: string | null }>>,
+): Promise<string[]> {
+  if (draggedId === targetId) throw new Error('任务顺序未变化')
+  const latest = await loadLatestTasks()
+  const ids = latest.filter(task => task.completedAt === null).map(task => task.id)
+  const from = ids.indexOf(draggedId)
+  const target = ids.indexOf(targetId)
+  if (from < 0 || target < 0) throw new Error('拖动任务已不在当前清单中')
+  ids.splice(from, 1)
+  const insertionIndex = target - (from < target ? 1 : 0)
+  ids.splice(insertionIndex, 0, draggedId)
+  return ids
+}

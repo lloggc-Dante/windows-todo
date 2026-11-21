@@ -31,6 +31,7 @@ class FakeWindow {
   show(): void { this.visible = true }
   showInactive(): void { this.visible = true; this.inactiveShown = true }
   hide(): void { this.visible = false }
+  isVisible(): boolean { return this.visible }
   load(): void { this.loaded = true }
   on(event: string, handler: (event?: { preventDefault(): void }) => void): void {
     this.handlers.set(event, handler)
@@ -130,5 +131,46 @@ describe('WidgetWindowController', () => {
     displays[0].workArea = { x: 0, y: 0, width: 1000, height: 700 }
     screenHandlers.get('display-metrics-changed')?.()
     expect(windows[0].bounds).toMatchObject({ x: 480, y: 400, width: 520, height: 300 })
+  })
+})
+
+
+describe('widget quit lifecycle', () => {
+  it('allows the window to close during a real application quit', () => {
+    const { controller, settings, windows } = setup()
+    controller.initialize()
+    controller.show()
+    controller.allowQuit()
+    let prevented = false
+
+    windows[0].emit('close', { preventDefault: () => { prevented = true } })
+
+    expect(prevented).toBe(false)
+    expect(settings.getSetting('widgetVisible')).toBe('true')
+  })
+})
+
+
+describe('widget review regressions', () => {
+  it('moves upward when growth would place the composer below the work area', () => {
+    const { controller, windows } = setup()
+    controller.initialize()
+    windows[0].moveTo(0, 700)
+
+    controller.setTaskCount(8)
+
+    expect(windows[0].bounds).toMatchObject({ x: 0, y: 608, height: 472 })
+  })
+
+  it.each(['display-added', 'display-removed'])('clamps after %s', event => {
+    const { controller, settings, windows, screenHandlers } = setup()
+    settings.setSetting('widgetPosition', JSON.stringify({
+      displayId: 99, x: 5000, y: 5000, width: 520, height: 300,
+    }))
+    controller.initialize()
+
+    screenHandlers.get(event)?.()
+
+    expect(windows[0].bounds).toMatchObject({ x: 1400, y: 780, height: 300 })
   })
 })

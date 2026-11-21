@@ -137,3 +137,18 @@ button, input, select { font: inherit; }
   background: rgb(255 255 255 / 45%);
   cursor: pointer;
 }
+
+.widget-error {
+  position: absolute;
+  z-index: 5;
+  left: 20px;
+  right: 20px;
+  bottom: 58px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  color: #8b2635;
+  background: rgb(255 235 238 / 92%);
+  font-size: 11px;
+  text-align: center;
+  pointer-events: none;
+}
