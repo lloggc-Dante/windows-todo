@@ -79,14 +79,16 @@ describe('WindowsIntegration', () => {
     expect(prevented).toBe(false)
   })
 
-  it('can be configured to close normally instead of using the tray', () => {
-    const integration = new WindowsIntegration(new FakeApp(), createWindow(), new WindowController(createWindow()))
+  it('quits the whole app instead of destroying the main window when tray closing is disabled', () => {
+    const app = new FakeApp()
+    const integration = new WindowsIntegration(app, createWindow(), new WindowController(createWindow()))
     integration.setCloseToTray(false)
     let prevented = false
 
     integration.handleClose({ preventDefault: () => { prevented = true } })
 
-    expect(prevented).toBe(false)
+    expect(prevented).toBe(true)
+    expect(app.quitRequested).toBe(true)
   })
 
   it('configures hidden login auto-start in both directions', () => {

@@ -26,8 +26,12 @@ export class WindowsIntegration {
   ) {}
 
   handleClose(event: CloseEvent): void {
-    if (!this.closeToTray || this.quitting) return
+    if (this.quitting) return
     event.preventDefault()
+    if (!this.closeToTray) {
+      this.quit()
+      return
+    }
     this.window.hide()
   }
 

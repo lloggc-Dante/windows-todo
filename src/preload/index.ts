@@ -22,6 +22,10 @@ const api: AppApi = {
   exportBackup: () => ipcRenderer.invoke('backup:export'),
   previewBackup: () => ipcRenderer.invoke('backup:preview'),
   replaceFromBackup: () => ipcRenderer.invoke('backup:replace'),
+  getWidgetPresentation: () => ipcRenderer.invoke('widget:get-presentation'),
+  setWidgetTaskCount: count => ipcRenderer.invoke('widget:set-task-count', count),
+  hideWidget: () => ipcRenderer.invoke('widget:hide'),
+  openMainWindow: () => ipcRenderer.invoke('widget:open-main'),
   onSelectTask: callback => {
     const listener = (_event: IpcRendererEvent, taskId: string): void => callback(taskId)
     ipcRenderer.on('tasks:select', listener)

@@ -1,5 +1,6 @@
 import type { BackupPreview } from './backup'
 import type { List, Task, TaskCompletion, TaskPatch } from './tasks'
+import type { WidgetPresentation } from './widget'
 
 export interface AppSettings {
   closeToTray: boolean
@@ -28,6 +29,10 @@ export interface AppApi {
   exportBackup(): Promise<boolean>
   previewBackup(): Promise<BackupPreview | null>
   replaceFromBackup(): Promise<void>
+  getWidgetPresentation(): Promise<WidgetPresentation>
+  setWidgetTaskCount(count: number): Promise<void>
+  hideWidget(): Promise<void>
+  openMainWindow(): Promise<void>
   onSelectTask(callback: (taskId: string) => void): () => void
 }
 
