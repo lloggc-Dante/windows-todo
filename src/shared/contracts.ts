@@ -1,3 +1,4 @@
+import type { BackupPreview } from './backup'
 import type { List, Task, TaskCompletion, TaskPatch } from './tasks'
 
 export interface AppSettings {
@@ -24,6 +25,9 @@ export interface AppApi {
   listCompletions(taskId: string): Promise<TaskCompletion[]>
   getSettings(): Promise<AppSettings>
   updateSettings(patch: Partial<AppSettings>): Promise<AppSettings>
+  exportBackup(): Promise<boolean>
+  previewBackup(): Promise<BackupPreview | null>
+  replaceFromBackup(): Promise<void>
   onSelectTask(callback: (taskId: string) => void): () => void
 }
 

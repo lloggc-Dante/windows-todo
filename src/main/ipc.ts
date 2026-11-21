@@ -1,4 +1,8 @@
-import { ipcMain } from 'electron'
+import { app, dialog, ipcMain } from 'electron'
+import type { BrowserWindow } from 'electron'
+import type Database from 'better-sqlite3'
+import { join } from 'node:path'
+import { exportBackup, previewBackup, replaceFromBackup } from './backup'
 import type { AppSettings } from '../shared/contracts'
 import type { TaskPatch } from '../shared/tasks'
 import type { TaskStore } from './db/task-store'
@@ -44,10 +48,13 @@ function taskPatch(value: unknown): TaskPatch {
 }
 
 export function registerTaskIpc(
+  db: Database.Database,
   store: TaskStore,
   scheduler: ReminderScheduler,
   integration: WindowsIntegration,
+  window: BrowserWindow,
 ): void {
+  let pendingBackupPath: string | null = null
   const changed = async <T>(operation: () => T): Promise<T> => {
     const result = operation()
     await scheduler.reschedule()
@@ -84,6 +91,35 @@ export function registerTaskIpc(
     changed(() => store.undoLatestCompletion(stringValue(taskId, '任务ID'))))
   ipcMain.handle('tasks:completions', (_event, taskId) =>
     store.listCompletions(stringValue(taskId, '任务ID')))
+
+  ipcMain.handle('backup:export', async () => {
+    const result = await dialog.showSaveDialog(window, {
+      title: '导出轻待办备份',
+      defaultPath: join(app.getPath('documents'), 'windows-todo-backup.json'),
+      filters: [{ name: 'JSON 备份', extensions: ['json'] }],
+    })
+    if (result.canceled || !result.filePath) return false
+    await exportBackup(db, result.filePath)
+    return true
+  })
+  ipcMain.handle('backup:preview', async () => {
+    const result = await dialog.showOpenDialog(window, {
+      title: '选择轻待办备份',
+      properties: ['openFile'],
+      filters: [{ name: 'JSON 备份', extensions: ['json'] }],
+    })
+    if (result.canceled || !result.filePaths[0]) return null
+    pendingBackupPath = result.filePaths[0]
+    return previewBackup(db, pendingBackupPath)
+  })
+  ipcMain.handle('backup:replace', async () => {
+    if (!pendingBackupPath) throw new Error('请先选择备份文件')
+    await replaceFromBackup(db, pendingBackupPath)
+    pendingBackupPath = null
+    integration.setCloseToTray(store.getSetting('closeToTray') !== 'false')
+    integration.setAutoStart(store.getSetting('autoStart') === 'true')
+    await scheduler.reschedule()
+  })
 
   ipcMain.handle('settings:get', (): AppSettings => ({
     closeToTray: store.getSetting('closeToTray') !== 'false',

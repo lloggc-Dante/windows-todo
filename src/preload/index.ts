@@ -19,6 +19,9 @@ const api: AppApi = {
   listCompletions: taskId => ipcRenderer.invoke('tasks:completions', taskId),
   getSettings: () => ipcRenderer.invoke('settings:get'),
   updateSettings: patch => ipcRenderer.invoke('settings:update', patch),
+  exportBackup: () => ipcRenderer.invoke('backup:export'),
+  previewBackup: () => ipcRenderer.invoke('backup:preview'),
+  replaceFromBackup: () => ipcRenderer.invoke('backup:replace'),
   onSelectTask: callback => {
     const listener = (_event: IpcRendererEvent, taskId: string): void => callback(taskId)
     ipcRenderer.on('tasks:select', listener)
