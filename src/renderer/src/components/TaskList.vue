@@ -55,7 +55,7 @@ function drop(targetId: string, event: DragEvent): void {
     </form>
 
     <div v-if="activeTasks.length === 0" class="empty-state">没有待办任务，轻松一下吧。</div>
-    <div data-testid="active-task-list" class="task-list">
+    <TransitionGroup tag="div" name="task-list" data-testid="active-task-list" class="task-list">
       <div
         v-for="task in activeTasks"
         :key="task.id"
@@ -74,7 +74,7 @@ function drop(targetId: string, event: DragEvent): void {
           <small v-if="task.dueLocal">{{ task.dueLocal.replace('T', ' ') }}<span v-if="task.recurrenceRule"> · 重复</span></small>
         </div>
       </div>
-    </div>
+    </TransitionGroup>
 
     <button
       v-if="completedTasks.length > 0"

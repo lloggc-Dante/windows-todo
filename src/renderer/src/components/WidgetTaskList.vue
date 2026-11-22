@@ -37,8 +37,9 @@ async function drop(targetId: string, event: DragEvent): Promise<void> {
     :style="{ height: `${listHeight}px` }"
   >
     <div v-if="tasks.length === 0" class="widget-empty">没有待办任务</div>
-    <div
-      v-for="task in tasks"
+    <TransitionGroup tag="div" name="task-list" class="widget-task-rows">
+      <div
+        v-for="task in tasks"
       :key="task.id"
       class="widget-task-row"
       draggable="true"
@@ -50,6 +51,7 @@ async function drop(targetId: string, event: DragEvent): Promise<void> {
       <button type="button" class="widget-check" aria-label="完成任务" @click="emit('complete', task.id)"></button>
       <span class="widget-task-title" data-widget-task-title>{{ task.title }}</span>
       <small v-if="task.dueLocal">{{ task.dueLocal.replace('T', ' ') }}</small>
-    </div>
+      </div>
+    </TransitionGroup>
   </div>
 </template>

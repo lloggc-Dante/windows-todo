@@ -1,0 +1,48 @@
+button {
+  transform-origin: center;
+  transition:
+    transform var(--motion-spring),
+    box-shadow var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    background-color var(--motion-fast) ease;
+  will-change: transform;
+}
+
+@media (hover: hover) {
+  button:hover { transform: translateY(-2px) scale(1.025); }
+  .widget-composer button:hover { transform: translateY(-2px) rotate(90deg) scale(1.06); }
+  .window-controls button:hover { transform: translateY(-1px); }
+}
+
+button:active {
+  transform: scale(.92);
+  transition-duration: 80ms;
+}
+
+.widget-check, .complete-button { transition: transform var(--motion-spring), box-shadow var(--motion-fast), background var(--motion-fast); }
+.widget-check:hover, .complete-button:hover { transform: scale(1.15); }
+.widget-check:active, .complete-button:active { transform: scale(.82); }
+
+.task-list-enter-active { transition: opacity 190ms ease, transform 260ms cubic-bezier(.2, 1.25, .4, 1); }
+.task-list-leave-active { position: absolute; width: 100%; transition: opacity 150ms ease, transform 180ms ease, height 180ms ease; }
+.task-list-enter-from { opacity: 0; transform: translateY(-8px) scale(.98); }
+.task-list-leave-to { opacity: 0; transform: translateX(12px) scale(.98); }
+.task-list-move { transition: transform 240ms cubic-bezier(.2, .8, .3, 1); }
+
+.glass-popover-enter-active { transition: opacity 140ms ease, transform 220ms cubic-bezier(.2, 1.25, .4, 1); }
+.glass-popover-leave-active { transition: opacity 100ms ease, transform 120ms ease; }
+.glass-popover-enter-from, .glass-popover-leave-to { opacity: 0; transform: translateY(4px) scale(.965); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+  button, button:hover, button:active,
+  .task-list-enter-from, .task-list-leave-to,
+  .glass-popover-enter-from, .glass-popover-leave-to {
+    transform: none !important;
+  }
+}

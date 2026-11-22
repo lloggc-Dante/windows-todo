@@ -44,9 +44,11 @@ onUnmounted(() => {
 
 <template>
   <Teleport to="body">
-    <div v-if="open" class="floating-popover" :style="style" @pointerdown.stop>
-      <slot />
-    </div>
+    <Transition name="glass-popover">
+      <div v-if="open" class="floating-popover" :style="style" @pointerdown.stop>
+        <slot />
+      </div>
+    </Transition>
   </Teleport>
 </template>
 
