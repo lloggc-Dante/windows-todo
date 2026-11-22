@@ -139,9 +139,9 @@ function keydown(event: KeyboardEvent): void {
   padding: 6px;
   border: 1px solid rgb(255 255 255 / 78%);
   border-radius: 13px;
-  background: linear-gradient(135deg, rgb(248 251 255 / 94%), rgb(229 238 251 / 88%));
+  background: linear-gradient(135deg, rgb(248 251 255 / 72%), rgb(229 238 251 / 48%));
   box-shadow: 0 16px 36px rgb(30 50 80 / 22%), inset 0 1px 0 white;
-  backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(30px) saturate(180%);
 }
 .app-select-option { padding: 8px 10px; border-radius: 8px; color: #3e526f; cursor: pointer; }
 .app-select-option.active { color: #174ca2; background: rgb(255 255 255 / 58%); }

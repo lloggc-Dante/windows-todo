@@ -28,9 +28,9 @@ function closeWindow(): void { void window.appApi.closeWindow() }
   display: flex;
   height: 40px;
   color: #334155;
-  background: linear-gradient(180deg, rgb(255 255 255 / 78%), rgb(245 248 252 / 62%));
-  border-bottom: 1px solid rgb(203 213 225 / 55%);
-  backdrop-filter: blur(20px) saturate(150%);
+  background: linear-gradient(180deg, rgb(255 255 255 / 52%), rgb(245 248 252 / 28%));
+  border-bottom: 1px solid var(--glass-edge);
+  backdrop-filter: blur(24px) saturate(180%);
   user-select: none;
 }
 .window-titlebar-drag {
