@@ -41,3 +41,29 @@ test('glass buttons, task rows, and popovers animate without changing drag regio
     rmSync(directory, { recursive: true, force: true })
   }
 })
+
+
+test('reduced motion suppresses spatial transforms while preserving interactions', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'windows-todo-reduced-motion-'))
+  const app = await electron.launch({ args: ['.'], env: { ...process.env, WINDOWS_TODO_TEST_DATA_DIR: directory } })
+  try {
+    await expect.poll(() => app.windows().length).toBe(2)
+    const main = app.windows().find(page => !page.url().includes('widget.html'))!
+    const widget = app.windows().find(page => page.url().includes('widget.html'))!
+    await main.emulateMedia({ reducedMotion: 'reduce' })
+    await widget.emulateMedia({ reducedMotion: 'reduce' })
+    const add = widget.getByRole('button', { name: '贴片添加' })
+    await add.hover()
+    expect(await add.evaluate(element => getComputedStyle(element).transform)).toBe('none')
+
+    await main.getByTestId('quick-add-input').fill('减少动效任务')
+    await main.getByTestId('quick-add-input').press('Enter')
+    await expect(main.locator('[data-task-title]')).toHaveText(['减少动效任务'])
+    await widget.getByTestId('widget-list-select').click()
+    await expect(widget.getByRole('listbox')).toBeVisible()
+    expect(await widget.locator('.floating-popover').evaluate(element => getComputedStyle(element).transform)).toBe('none')
+  } finally {
+    await app.close()
+    rmSync(directory, { recursive: true, force: true })
+  }
+})

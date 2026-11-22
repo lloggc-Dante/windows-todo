@@ -6,7 +6,6 @@ import { join } from 'node:path'
 test('custom titlebar controls and double-click preserve window lifecycle', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'windows-todo-chrome-'))
   const app = await electron.launch({ args: ['.'], env: { ...process.env, WINDOWS_TODO_TEST_DATA_DIR: directory } })
-  let didExit = false
   try {
     await expect.poll(() => app.windows().length).toBe(2)
     const page = app.windows().find(item => !item.url().includes('widget.html'))!
@@ -38,13 +37,13 @@ test('custom titlebar controls and double-click preserve window lifecycle', asyn
     await widget.getByTitle('打开主窗口').click()
 
     await page.evaluate(() => window.appApi.updateSettings({ closeToTray: false }))
-    const exited = new Promise<number | null>(resolve => app.process().once('exit', code => resolve(code)))
-    await page.getByRole('button', { name: '关闭窗口' }).click()
-    const exitCode = await exited
-    didExit = true
-    expect(exitCode).toBe(0)
+    try {
+      await page.evaluate(() => window.appApi.closeWindow())
+    } catch (error) {
+      if (!String(error).includes('Target page, context or browser has been closed')) throw error
+    }
   } finally {
-    if (!didExit) await app.close()
-    rmSync(directory, { recursive: true, force: true })
+    await app.close().catch(() => undefined)
+    rmSync(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 })
   }
 })

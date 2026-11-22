@@ -5,7 +5,6 @@ button {
     box-shadow var(--motion-fast) ease,
     border-color var(--motion-fast) ease,
     background-color var(--motion-fast) ease;
-  will-change: transform;
 }
 
 @media (hover: hover) {

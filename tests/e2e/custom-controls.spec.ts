@@ -19,6 +19,7 @@ test('custom selects support pointer, keyboard, escape, and outside dismissal', 
     await expect(main.getByRole('listbox')).toBeVisible()
     await main.getByRole('option', { name: '每周', exact: true }).click()
     await expect(recurrence).toContainText('每周')
+    await main.waitForTimeout(400)
 
     await recurrence.focus()
     await recurrence.press('ArrowDown')

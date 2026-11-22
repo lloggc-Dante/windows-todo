@@ -34,6 +34,7 @@ test('manages title-only tasks, manual order, and collapsed completion history',
 
     const firstTask = page.locator('[data-testid="active-task-list"] .task-item').nth(1)
     const secondTask = page.locator('[data-testid="active-task-list"] .task-item').nth(0)
+    await page.waitForTimeout(400)
     await firstTask.dragTo(secondTask)
     await expect(titles).toHaveText(['以后整理书桌', '第二项'])
 
