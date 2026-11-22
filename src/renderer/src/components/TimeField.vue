@@ -69,7 +69,7 @@ function chooseMinute(minute: string): void {
 .time-input-row { display: flex; gap: 6px; }
 .time-input-row input { min-width: 0; flex: 1; }
 .time-input-row button { width: 36px; border: 0; border-radius: 7px; color: #526277; background: #f1f5f9bf; cursor: pointer; }
-.time-popover { position: static; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; height: 100%; max-height: inherit; padding: 12px; border: 1px solid #ffffffc9; border-radius: 16px; background: linear-gradient(135deg,#f8fbffcf,#e5eefb96); box-shadow: 0 18px 40px #1e325038; backdrop-filter: blur(24px); }
+.time-popover { position: static; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; height: 100%; max-height: inherit; padding: 12px; border: 1px solid #ffffffc9; border-radius: 16px; background: linear-gradient(135deg,#f8fbffe0,#e5eefbb8); box-shadow: 0 18px 40px #1e325038; backdrop-filter: blur(24px); }
 .time-popover > div { overflow-y: auto; scrollbar-width: thin; }
 .time-popover strong { display: block; padding: 4px; color: #8290a5; text-align: center; }
 .time-popover button { width: 100%; padding: 6px; border: 0; border-radius: 7px; color: #425b78; background: transparent; cursor: pointer; }

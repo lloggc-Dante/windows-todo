@@ -1,4 +1,5 @@
-import { _electron as electron, expect, test } from '@playwright/test'
+import { _electron as electron, chromium, expect, test } from '@playwright/test'
+import { spawn } from 'node:child_process'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -35,15 +36,40 @@ test('custom titlebar controls and double-click preserve window lifecycle', asyn
       .find(item => !item.webContents.getURL().includes('widget.html'))?.isVisible())).toBe(false)
     expect(app.process().exitCode).toBeNull()
     await widget.getByTitle('打开主窗口').click()
+  } finally {
+    await app.close().catch(() => undefined)
+    rmSync(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 })
+  }
+})
 
+
+test('closeToTray=false exits the whole application with code zero', async () => {
+  test.setTimeout(60_000)
+  const directory = mkdtempSync(join(tmpdir(), 'windows-todo-quit-'))
+  const port = 9600 + Math.floor(Math.random() * 300)
+  const child = spawn(join(process.cwd(), 'node_modules/electron/dist/electron.exe'), [
+    '.', `--remote-debugging-port=${port}`,
+  ], { env: { ...process.env, WINDOWS_TODO_TEST_DATA_DIR: directory }, stdio: 'ignore' })
+  let browser: Awaited<ReturnType<typeof chromium.connectOverCDP>> | undefined
+  try {
+    await expect.poll(async () => {
+      try { return (await fetch(`http://127.0.0.1:${port}/json/list`)).ok } catch { return false }
+    }).toBe(true)
+    browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`)
+    const context = browser.contexts()[0]
+    await expect.poll(() => context.pages().length).toBe(2)
+    const page = context.pages().find(item => !item.url().includes('widget.html'))!
     await page.evaluate(() => window.appApi.updateSettings({ closeToTray: false }))
+    const exited = new Promise<number | null>(resolve => child.once('exit', code => resolve(code)))
     try {
       await page.evaluate(() => window.appApi.closeWindow())
     } catch (error) {
-      if (!String(error).includes('Target page, context or browser has been closed')) throw error
+      if (!/closed|Target/i.test(String(error))) throw error
     }
+    expect(await exited).toBe(0)
   } finally {
-    await app.close().catch(() => undefined)
+    await browser?.close().catch(() => undefined)
+    if (child.exitCode === null) child.kill()
     rmSync(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 })
   }
 })

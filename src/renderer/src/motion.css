@@ -23,13 +23,14 @@ button:active {
 .widget-check:active, .complete-button:active { transform: scale(.82); }
 
 .task-list-enter-active { transition: opacity 190ms ease, transform 260ms cubic-bezier(.2, 1.25, .4, 1); }
-.task-list-leave-active { position: absolute; width: 100%; transition: opacity 150ms ease, transform 180ms ease, height 180ms ease; }
+.task-list { position: relative; }
+.task-list-leave-active { position: absolute; width: 100%; pointer-events: none; transition: opacity 150ms ease, transform 180ms ease; }
 .task-list-enter-from { opacity: 0; transform: translateY(-8px) scale(.98); }
 .task-list-leave-to { opacity: 0; transform: translateX(12px) scale(.98); }
 .task-list-move { transition: transform 240ms cubic-bezier(.2, .8, .3, 1); }
 
 .glass-popover-enter-active { transition: opacity 140ms ease, transform 220ms cubic-bezier(.2, 1.25, .4, 1); }
-.glass-popover-leave-active { transition: opacity 100ms ease, transform 120ms ease; }
+.glass-popover-leave-active { pointer-events: none; transition: opacity 100ms ease, transform 120ms ease; }
 .glass-popover-enter-from, .glass-popover-leave-to { opacity: 0; transform: translateY(4px) scale(.965); }
 
 @media (prefers-reduced-motion: reduce) {

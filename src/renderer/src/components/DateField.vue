@@ -106,7 +106,7 @@ function clear(): void {
 .date-input-row input { min-width: 0; flex: 1; }
 .date-input-row button, .date-popover button { border: 0; border-radius: 7px; color: #526277; background: rgb(241 245 249 / 75%); cursor: pointer; }
 .date-input-row button { width: 34px; }
-.date-popover { position: static; width: 100%; max-height: inherit; overflow-y: auto; padding: 12px; border: 1px solid #ffffffc9; border-radius: 16px; background: linear-gradient(135deg,#f8fbffcf,#e5eefb96); box-shadow: 0 18px 40px #1e325038; backdrop-filter: blur(24px); }
+.date-popover { position: static; width: 100%; max-height: inherit; overflow-y: auto; padding: 12px; border: 1px solid #ffffffc9; border-radius: 16px; background: linear-gradient(135deg,#f8fbffe0,#e5eefbb8); box-shadow: 0 18px 40px #1e325038; backdrop-filter: blur(24px); }
 .date-popover header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .date-popover header button { width: 30px; height: 28px; }
 .weekdays, .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; text-align: center; }

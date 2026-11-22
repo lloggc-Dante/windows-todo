@@ -88,7 +88,7 @@ function keydown(event: KeyboardEvent): void {
     >
       <span>{{ selectedLabel }}</span><span class="app-select-chevron">⌄</span>
     </button>
-    <FloatingPopover :open="open" :anchor="trigger" :max-height="240">
+    <FloatingPopover :open="open" :anchor="root" :max-height="240">
       <div class="app-select-popover" role="listbox" :aria-label="ariaLabel">
         <div
           v-for="(option, index) in options"
@@ -139,7 +139,7 @@ function keydown(event: KeyboardEvent): void {
   padding: 6px;
   border: 1px solid rgb(255 255 255 / 78%);
   border-radius: 13px;
-  background: linear-gradient(135deg, rgb(248 251 255 / 72%), rgb(229 238 251 / 48%));
+  background: linear-gradient(135deg, rgb(248 251 255 / 84%), rgb(229 238 251 / 68%));
   box-shadow: 0 16px 36px rgb(30 50 80 / 22%), inset 0 1px 0 white;
   backdrop-filter: blur(30px) saturate(180%);
 }

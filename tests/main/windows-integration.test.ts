@@ -1,14 +1,20 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { WindowController } from '../../src/main/window-controller'
 import { handleStartupFailure, WindowsIntegration } from '../../src/main/windows-integration'
 
 class FakeApp {
   quitRequested = false
   lockAvailable = true
+  exitCode: number | null = null
   loginSettings: Record<string, unknown> | undefined
   private readonly handlers = new Map<string, () => void>()
 
   quit(): void {
+    this.quitRequested = true
+  }
+
+  exit(code: number): void {
+    this.exitCode = code
     this.quitRequested = true
   }
 
@@ -157,5 +163,22 @@ describe('startup failures', () => {
     expect(errorMessage).toContain('数据库版本较新')
     expect(window.destroyed).toBe(true)
     expect(app.quitRequested).toBe(true)
+  })
+})
+
+
+describe('graceful quit fallback', () => {
+  it('exits with code zero if graceful quit stalls', () => {
+    vi.useFakeTimers()
+    try {
+      const app = new FakeApp()
+      const integration = new WindowsIntegration(app, createWindow(), new WindowController(createWindow()))
+      integration.quit()
+      expect(app.exitCode).toBeNull()
+      vi.advanceTimersByTime(1100)
+      expect(app.exitCode).toBe(0)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

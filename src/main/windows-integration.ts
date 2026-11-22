@@ -10,6 +10,7 @@ interface ClosableWindow {
 
 interface IntegrationApp {
   quit(): void
+  exit(code: number): void
   requestSingleInstanceLock(): boolean
   setLoginItemSettings(settings: { openAtLogin: boolean; args: string[] }): void
   on(event: 'second-instance', handler: () => void): void
@@ -59,6 +60,7 @@ export class WindowsIntegration {
   quit(): void {
     this.allowQuit()
     this.app.quit()
+    setTimeout(() => this.app.exit(0), 1000).unref()
   }
 }
 
