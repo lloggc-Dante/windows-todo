@@ -8,14 +8,22 @@ files:
   - package.json
 asarUnpack:
   - "**/*.node"
+extraResources:
+  - from: native-widget/bin
+    to: native-widget
+  - from: assets/icon.png
+    to: icon.png
 npmRebuild: true
 win:
+  icon: build/icon.ico
   target:
     - target: nsis
       arch:
         - x64
   artifactName: ${productName}-Setup-${version}-${arch}.${ext}
 nsis:
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true

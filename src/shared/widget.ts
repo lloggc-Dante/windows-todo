@@ -53,9 +53,9 @@ export function resolveWidgetPresentation(input: {
   const acrylic = input.platform === 'win32' && Number.isFinite(build) && build >= 22621
   return {
     mode: acrylic ? 'acrylic' : 'css',
-    transparent: !acrylic,
+    transparent: true,
     roundedCorners: acrylic,
-    backgroundMaterial: acrylic ? 'acrylic' : 'none',
+    backgroundMaterial: 'none',
   }
 }
 

@@ -32,7 +32,8 @@ async function drop(targetId: string, event: DragEvent): Promise<void> {
 
 <template>
   <div
-    class="widget-task-list no-drag"
+    class="widget-task-list"
+    :class="{ 'no-drag': tasks.length > 0 }"
     data-testid="widget-task-list"
     :style="{ height: `${listHeight}px` }"
   >

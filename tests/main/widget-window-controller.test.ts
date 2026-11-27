@@ -15,6 +15,7 @@ class FakeWindow {
   inactiveShown = false
   material: string | null = null
   loaded = false
+  destroyed = false
   private readonly handlers = new Map<string, (event?: { preventDefault(): void }) => void>()
 
   constructor(public readonly options: Record<string, unknown>) {
@@ -31,6 +32,7 @@ class FakeWindow {
   show(): void { this.visible = true }
   showInactive(): void { this.visible = true; this.inactiveShown = true }
   hide(): void { this.visible = false }
+  destroy(): void { this.destroyed = true; this.visible = false }
   isVisible(): boolean { return this.visible }
   load(): void { this.loaded = true }
   on(event: string, handler: (event?: { preventDefault(): void }) => void): void {
@@ -68,20 +70,21 @@ function setup(release = '10.0.22621', hidden = false) {
 }
 
 describe('WidgetWindowController', () => {
-  it('creates a non-topmost Acrylic window without transparency on Windows 11', () => {
+  it('uses a truly transparent window without focus-dependent system Acrylic on Windows 11', () => {
     const { controller, windows } = setup()
     controller.initialize()
     expect(windows[0].options).toMatchObject({
       frame: false,
-      transparent: false,
+      transparent: true,
       alwaysOnTop: false,
       skipTaskbar: true,
       resizable: false,
       roundedCorners: true,
+      backgroundColor: '#00000000',
       width: 360,
       height: 178,
     })
-    expect(windows[0].material).toBe('acrylic')
+    expect(windows[0].material).toBeNull()
     expect(windows[0].loaded).toBe(true)
   })
 
@@ -141,6 +144,7 @@ describe('widget quit lifecycle', () => {
     controller.initialize()
     controller.show()
     controller.allowQuit()
+    expect(windows[0].destroyed).toBe(true)
     let prevented = false
 
     windows[0].emit('close', { preventDefault: () => { prevented = true } })

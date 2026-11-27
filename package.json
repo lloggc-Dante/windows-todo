@@ -6,8 +6,9 @@
   "type": "module",
   "main": "./out/main/index.js",
   "scripts": {
+    "build:native-widget": "node scripts/build-native-widget.mjs",
     "dev": "electron-vite dev",
-    "build": "electron-vite build",
+    "build": "npm run build:native-widget && electron-vite build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "test:e2e": "playwright test",

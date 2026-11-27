@@ -7,7 +7,7 @@ test('custom calendar and time picker preserve task scheduling fields', async ()
   const directory = mkdtempSync(join(tmpdir(), 'windows-todo-date-time-'))
   const app = await electron.launch({ args: ['.'], env: { ...process.env, WINDOWS_TODO_TEST_DATA_DIR: directory } })
   try {
-    await expect.poll(() => app.windows().length).toBe(2)
+    await expect.poll(() => app.windows().length).toBe(1)
     const page = app.windows().find(item => !item.url().includes('widget.html'))!
     await page.getByTestId('quick-add-input').fill('自定义日期任务')
     await page.getByTestId('quick-add-input').press('Enter')

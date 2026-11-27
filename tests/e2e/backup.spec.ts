@@ -11,7 +11,7 @@ test('keeps backup inside advanced settings and persists notification preference
   })
 
   try {
-    await expect.poll(() => app.windows().length).toBe(2)
+    await expect.poll(() => app.windows().length).toBe(1)
     const page = app.windows().find(candidate => !candidate.url().includes('widget.html'))!
     await expect(page.getByTestId('quick-add-input')).toBeVisible()
     await expect(page.getByTestId('settings-panel')).toHaveCount(0)

@@ -8,9 +8,8 @@ test('custom titlebar controls and double-click preserve window lifecycle', asyn
   const directory = mkdtempSync(join(tmpdir(), 'windows-todo-chrome-'))
   const app = await electron.launch({ args: ['.'], env: { ...process.env, WINDOWS_TODO_TEST_DATA_DIR: directory } })
   try {
-    await expect.poll(() => app.windows().length).toBe(2)
-    const page = app.windows().find(item => !item.url().includes('widget.html'))!
-    const widget = app.windows().find(item => item.url().includes('widget.html'))!
+    await expect.poll(() => app.windows().length).toBe(1)
+    const page = app.windows()[0]
     await expect(page.getByTestId('window-titlebar')).toBeVisible()
 
     await page.getByRole('button', { name: '最小化' }).click()
@@ -35,7 +34,8 @@ test('custom titlebar controls and double-click preserve window lifecycle', asyn
     await expect.poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()
       .find(item => !item.webContents.getURL().includes('widget.html'))?.isVisible())).toBe(false)
     expect(app.process().exitCode).toBeNull()
-    await widget.getByTitle('打开主窗口').click()
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.show())
+    await expect.poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.isVisible())).toBe(true)
   } finally {
     await app.close().catch(() => undefined)
     rmSync(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 })
@@ -57,7 +57,7 @@ test('closeToTray=false exits the whole application with code zero', async () =>
     }).toBe(true)
     browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`)
     const context = browser.contexts()[0]
-    await expect.poll(() => context.pages().length).toBe(2)
+    await expect.poll(() => context.pages().length).toBe(1)
     const page = context.pages().find(item => !item.url().includes('widget.html'))!
     await page.evaluate(() => window.appApi.updateSettings({ closeToTray: false }))
     const exited = new Promise<number | null>(resolve => child.once('exit', code => resolve(code)))

@@ -22,12 +22,12 @@ describe('widget geometry', () => {
 })
 
 describe('platform presentation', () => {
-  it('uses non-transparent Acrylic with native corners on Windows 11 22H2+', () => {
+  it('uses a transparent clear-glass window with native corners on Windows 11 22H2+', () => {
     expect(resolveWidgetPresentation({ platform: 'win32', release: '10.0.22621' })).toEqual({
       mode: 'acrylic',
-      transparent: false,
+      transparent: true,
       roundedCorners: true,
-      backgroundMaterial: 'acrylic',
+      backgroundMaterial: 'none',
     })
   })
 

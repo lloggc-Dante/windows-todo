@@ -3,29 +3,36 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-test('shared Apple glass tokens and balanced translucent layers apply to both windows', async () => {
+test('main window uses layered glass panels and a distinct selected task card', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'windows-todo-glass-material-'))
   const app = await electron.launch({ args: ['.'], env: { ...process.env, WINDOWS_TODO_TEST_DATA_DIR: directory } })
   try {
-    await expect.poll(() => app.windows().length).toBe(2)
-    const main = app.windows().find(page => !page.url().includes('widget.html'))!
-    const widget = app.windows().find(page => page.url().includes('widget.html'))!
-    await expect(widget.getByTestId('desktop-widget')).toBeVisible()
+    await expect.poll(() => app.windows().length).toBe(1)
+    const main = app.windows()[0]
+    await main.getByTestId('quick-add-input').fill('选中任务')
+    await main.getByTestId('quick-add-input').press('Enter')
+    await main.getByTestId('quick-add-input').fill('普通任务')
+    await main.getByTestId('quick-add-input').press('Enter')
+    await main.locator('.task-item').filter({ hasText: '选中任务' }).click()
 
-    const shell = await widget.getByTestId('desktop-widget').evaluate(element => {
-      const style = getComputedStyle(element)
-      return {
-        backdrop: style.backdropFilter,
-        background: style.backgroundImage,
-        edge: style.getPropertyValue('--glass-edge').trim(),
-        highlight: getComputedStyle(element, '::after').backgroundImage,
-      }
-    })
-    expect(shell.backdrop).toContain('blur(30px)')
-    expect(shell.backdrop).toMatch(/saturate\((180%|1\.8)\)/)
-    expect(shell.background).toContain('radial-gradient')
-    expect(shell.edge).not.toBe('')
-    expect(shell.highlight).not.toBe('none')
+    for (const selector of ['.list-sidebar', '.task-panel', '.task-detail']) {
+      const style = await main.locator(selector).evaluate(element => {
+        const computed = getComputedStyle(element)
+        return {
+          radius: computed.borderRadius,
+          background: computed.backgroundImage,
+          edge: computed.borderTopColor,
+        }
+      })
+      expect(style.radius).not.toBe('0px')
+      expect(style.background).toContain('linear-gradient')
+      expect(style.edge).toContain('rgba')
+    }
+
+    const selected = await main.locator('.task-item.selected').evaluate(element => getComputedStyle(element).backgroundImage)
+    const ordinary = await main.locator('.task-item:not(.selected)').evaluate(element => getComputedStyle(element).backgroundImage)
+    expect(selected).not.toBe(ordinary)
+    expect(selected).toContain('linear-gradient')
 
     const titlebar = await main.getByTestId('window-titlebar').evaluate(element =>
       getComputedStyle(element).backdropFilter)

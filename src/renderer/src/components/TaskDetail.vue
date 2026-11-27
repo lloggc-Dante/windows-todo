@@ -135,23 +135,24 @@ function save(): void {
 </template>
 
 <style scoped>
-.task-detail { overflow-y: auto; padding: 26px 22px; background: #f8fafc; border-left: 1px solid #e2e8f0; }
-h2 { margin: 0 0 22px; font-size: 18px; }
-label { display: block; margin: 14px 0 6px; color: #64748b; font-size: 13px; }
-input:not([type='checkbox']), textarea, select { box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 7px; background: white; font: inherit; }
+.task-detail { min-height: 0; overflow-y: auto; padding: 23px 19px; border: 1px solid rgb(255 255 255 / 60%); border-radius: 18px; background: linear-gradient(145deg, rgb(255 255 255 / 44%), rgb(244 248 252 / 28%)); box-shadow: inset 0 1px rgb(255 255 255 / 68%), 0 10px 26px rgb(52 73 99 / 6%); }
+h2 { margin: 0 0 22px; color: #26364e; font-size: 17px; letter-spacing: -.025em; }
+label { display: block; margin: 14px 0 6px; color: #8291a4; font-size: 11px; font-weight: 600; }
+input:not([type='checkbox']), textarea, select { box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid rgb(255 255 255 / 64%); border-radius: 10px; outline: 0; color: #42536a; background: rgb(255 255 255 / 34%); font: inherit; }
+input:focus, textarea:focus { border-color: #fff; background: rgb(255 255 255 / 52%); }
 textarea { resize: vertical; }
 .inline-field { display: flex; align-items: center; gap: 6px; }
 .detail-actions { display: flex; gap: 10px; margin-top: 24px; }
-.completion-history { margin-top: 22px; padding-top: 12px; border-top: 1px solid #e2e8f0; }
-.completion-history h3 { font-size: 14px; }
+.completion-history { margin-top: 22px; padding-top: 12px; border-top: 1px solid rgb(255 255 255 / 48%); }
+.completion-history h3 { font-size: 13px; }
 .completion-history p { color: #94a3b8; }
 .history-item { display: flex; flex-direction: column; gap: 3px; padding: 7px 0; color: #475569; }
 .history-item small { color: #94a3b8; }
-.undo-button { margin-top: 8px; padding: 8px 10px; border: 0; border-radius: 7px; background: #e0e9ff; color: #1d4ed8; cursor: pointer; }
-.detail-actions button { flex: 1; padding: 10px; border: 0; border-radius: 7px; cursor: pointer; }
-.save { background: #2563eb; color: white; }
-.delete { background: #fee2e2; color: #b91c1c; }
-.detail-placeholder { padding-top: 80px; color: #94a3b8; text-align: center; }
+.undo-button { margin-top: 8px; padding: 8px 10px; border: 1px solid rgb(255 255 255 / 55%); border-radius: 9px; background: rgb(230 238 255 / 45%); color: #315fae; cursor: pointer; }
+.detail-actions button { flex: 1; padding: 10px; border: 1px solid rgb(255 255 255 / 42%); border-radius: 10px; cursor: pointer; }
+.save { background: linear-gradient(135deg, #5687df, #4c6fc8); color: white; box-shadow: 0 5px 13px rgb(66 106 190 / 18%); }
+.delete { background: rgb(255 235 240 / 42%); color: #a65e6b; }
+.detail-placeholder { padding-top: 80px; color: #8c9aab; text-align: center; }
 </style>
 
 <style scoped>
@@ -159,9 +160,9 @@ textarea { resize: vertical; }
   box-sizing: border-box;
   width: 100%;
   padding: 10px;
-  border: 1px solid #cbd5e1;
-  border-radius: 7px;
-  background: rgb(255 255 255 / 72%);
+  border: 1px solid rgb(255 255 255 / 64%);
+  border-radius: 10px;
+  background: rgb(255 255 255 / 34%);
   font: inherit;
 }
 </style>

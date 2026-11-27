@@ -12,11 +12,9 @@ test('launches a visible shell without exposing Node.js to the renderer', async 
 
 
   try {
-    await expect.poll(() => app.windows().length).toBe(2)
-    const page = app.windows().find(candidate => !candidate.url().includes('widget.html'))!
-    const widget = app.windows().find(candidate => candidate.url().includes('widget.html'))!
+    await expect.poll(() => app.windows().length).toBe(1)
+    const page = app.windows()[0]
     await expect(page.locator('[data-testid="app-shell"]')).toBeVisible()
-    await expect(widget.getByTestId('desktop-widget')).toBeVisible()
     expect(await page.evaluate(() => 'require' in window)).toBe(false)
     expect(await page.evaluate(() => window.appApi.getAppVersion())).toBe('0.1.0')
   } finally {

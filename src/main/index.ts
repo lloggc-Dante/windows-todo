@@ -1,6 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, powerMonitor, screen, Tray } from 'electron'
+import { spawn } from 'node:child_process'
 import { mkdirSync } from 'node:fs'
-import { release } from 'node:os'
 import { join } from 'node:path'
 import { createDatabase } from './db/database'
 import { TaskStore } from './db/task-store'
@@ -9,19 +9,20 @@ import { registerTaskIpc } from './ipc'
 import { ReminderScheduler } from './reminder-scheduler'
 import { createTrayIcon } from './tray-icon'
 import { WindowController } from './window-controller'
-import { handleStartupFailure, WindowsIntegration } from './windows-integration'
-import { WidgetWindowController } from './widget-window-controller'
-import { registerWidgetIpc } from './widget-ipc'
+import { appUserModelId, handleStartupFailure, WindowsIntegration } from './windows-integration'
+import { NativeWidgetController } from './native-widget-controller'
 import { registerWindowIpc } from './window-ipc'
-import { resolveWidgetPresentation } from '../shared/widget'
 
-app.setAppUserModelId('com.windows-todo.app')
+app.setAppUserModelId(appUserModelId(app.isPackaged))
 Menu.setApplicationMenu(null)
 if (process.env.WINDOWS_TODO_TEST_DATA_DIR) {
   app.setPath('userData', process.env.WINDOWS_TODO_TEST_DATA_DIR)
 }
 
 function startApplication(): void {
+  const iconPath = app.isPackaged
+    ? join(process.resourcesPath, 'icon.png')
+    : join(process.cwd(), 'assets', 'icon.png')
   const window = new BrowserWindow({
     width: 1100,
     height: 720,
@@ -29,6 +30,7 @@ function startApplication(): void {
     minHeight: 520,
     show: false,
     frame: false,
+    icon: iconPath,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -55,36 +57,43 @@ function startApplication(): void {
   }
   const store = new TaskStore(db)
   if (store.listLists().length === 0) store.createList('我的待办')
-  const widget = new WidgetWindowController({
-    presentation: resolveWidgetPresentation({ platform: process.platform, release: release() }),
-    hidden: process.argv.includes('--hidden'),
+  const scheduler = new ReminderScheduler(db, store, new WindowsNotifier(), controller)
+  const widgetExecutable = app.isPackaged
+    ? join(process.resourcesPath, 'native-widget', 'LightTodo.Widget.exe')
+    : join(process.cwd(), 'native-widget', 'bin', 'LightTodo.Widget.exe')
+  const widget = new NativeWidgetController({
     settings: store,
+    store,
     screen,
-    createWindow: options => new BrowserWindow({
-      ...(options as Electron.BrowserWindowConstructorOptions),
-      webPreferences: {
-        preload: join(__dirname, '../preload/index.js'),
-        contextIsolation: true,
-        nodeIntegration: false,
-        sandbox: true,
-      },
-    }),
-    loadWindow: widgetWindow => {
-      const browserWindow = widgetWindow as unknown as BrowserWindow
-      if (process.env.ELECTRON_RENDERER_URL) {
-        void browserWindow.loadURL(`${process.env.ELECTRON_RENDERER_URL}/widget.html`)
-      } else {
-        void browserWindow.loadFile(join(__dirname, '../renderer/widget.html'))
-      }
+    enabled: process.platform === 'win32',
+    createProcess: () => {
+      const child = spawn(widgetExecutable, [], {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        windowsHide: true,
+      })
+      if (!child.stdin || !child.stdout) throw new Error('无法建立原生贴片通信')
+      child.stderr?.on('data', chunk => console.error('原生贴片', chunk.toString()))
+      return child
     },
+    openMain: () => controller.showMainWindow(),
+    broadcast: () => {
+      for (const target of BrowserWindow.getAllWindows()) target.webContents.send('tasks:changed')
+    },
+    reschedule: () => scheduler.reschedule(),
   })
   widget.initialize()
   widget.applySettings()
-  const scheduler = new ReminderScheduler(db, store, new WindowsNotifier(), controller)
   integration.setCloseToTray(store.getSetting('closeToTray') !== 'false')
   integration.setAutoStart(store.getSetting('autoStart') === 'true')
-  registerTaskIpc(db, store, scheduler, integration, window, undefined, () => widget.applySettings())
-  registerWidgetIpc(widget, controller, store)
+  registerTaskIpc(db, store, scheduler, integration, window, excludeSenderId => {
+    for (const target of BrowserWindow.getAllWindows()) {
+      if (target.webContents.id !== excludeSenderId) target.webContents.send('tasks:changed')
+    }
+    widget.refresh()
+  }, () => {
+    widget.applySettings()
+    widget.refresh()
+  })
   registerWindowIpc(controller)
   const checkReminders = (): void => {
     void scheduler.reconcile(new Date())
@@ -93,13 +102,21 @@ function startApplication(): void {
   }
   powerMonitor.on('resume', checkReminders)
   const reminderInterval = setInterval(checkReminders, 60_000)
-  app.on('will-quit', () => {
+  let cleanedUp = false
+  const cleanup = (): void => {
+    if (cleanedUp) return
+    cleanedUp = true
     clearInterval(reminderInterval)
     scheduler.stop()
     db.close()
+  }
+  integration.setBeforeQuit(() => {
+    widget.allowQuit()
+    cleanup()
   })
+  app.on('will-quit', cleanup)
 
-  const tray = new Tray(createTrayIcon())
+  const tray = new Tray(createTrayIcon(iconPath))
   tray.setToolTip('轻待办')
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: '打开', click: () => controller.showMainWindow() },

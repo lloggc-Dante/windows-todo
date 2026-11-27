@@ -1,6 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
 import { WindowController } from '../../src/main/window-controller'
-import { handleStartupFailure, WindowsIntegration } from '../../src/main/windows-integration'
+import { appUserModelId, handleStartupFailure, WindowsIntegration } from '../../src/main/windows-integration'
+
+describe('application identity', () => {
+  it('keeps development shortcuts separate from the installed app', () => {
+    expect(appUserModelId(true)).toBe('com.windows-todo.app')
+    expect(appUserModelId(false)).toBe('com.windows-todo.app.dev')
+  })
+})
 
 class FakeApp {
   quitRequested = false
@@ -38,12 +45,16 @@ class FakeApp {
 function createWindow() {
   const window = {
     hidden: false,
+    destroyed: false,
     visible: false,
     focused: false,
     restored: false,
     selectedTask: null as string | null,
     hide() {
       this.hidden = true
+    },
+    destroy() {
+      this.destroyed = true
     },
     show() {
       this.visible = true
@@ -84,6 +95,7 @@ describe('WindowsIntegration', () => {
     expect(window.hidden).toBe(true)
 
     integration.quit()
+    expect(window.destroyed).toBe(true)
     prevented = false
     integration.handleClose(closeEvent)
     expect(app.quitRequested).toBe(true)
@@ -167,18 +179,31 @@ describe('startup failures', () => {
 })
 
 
-describe('graceful quit fallback', () => {
-  it('exits with code zero if graceful quit stalls', () => {
-    vi.useFakeTimers()
-    try {
-      const app = new FakeApp()
-      const integration = new WindowsIntegration(app, createWindow(), new WindowController(createWindow()))
-      integration.quit()
-      expect(app.exitCode).toBeNull()
-      vi.advanceTimersByTime(1100)
-      expect(app.exitCode).toBe(0)
-    } finally {
-      vi.useRealTimers()
+describe('immediate quit', () => {
+  it('exits with code zero even if graceful quit would fail', () => {
+    const app = new FakeApp()
+    app.quit = () => {
+      throw new Error('不应调用可能卡住的 app.quit')
     }
+    const integration = new WindowsIntegration(app, createWindow(), new WindowController(createWindow()))
+    expect(() => integration.quit()).not.toThrow()
+    expect(app.exitCode).toBe(0)
+  })
+
+  it('runs native widget and database cleanup before immediate exit', () => {
+    const app = new FakeApp()
+    const integration = new WindowsIntegration(app, createWindow(), new WindowController(createWindow()))
+    let cleaned = false
+    integration.setBeforeQuit(() => { cleaned = true })
+    integration.quit()
+    expect(cleaned).toBe(true)
+    expect(app.exitCode).toBe(0)
+  })
+
+  it('exits immediately with code zero', () => {
+    const app = new FakeApp()
+    const integration = new WindowsIntegration(app, createWindow(), new WindowController(createWindow()))
+    integration.quit()
+    expect(app.exitCode).toBe(0)
   })
 })

@@ -7,9 +7,8 @@ test('leaving rows and transformed select anchors preserve geometry and hit test
   const directory = mkdtempSync(join(tmpdir(), 'windows-todo-glass-review-'))
   const app = await electron.launch({ args: ['.'], env: { ...process.env, WINDOWS_TODO_TEST_DATA_DIR: directory } })
   try {
-    await expect.poll(() => app.windows().length).toBe(2)
-    const main = app.windows().find(page => !page.url().includes('widget.html'))!
-    const widget = app.windows().find(page => page.url().includes('widget.html'))!
+    await expect.poll(() => app.windows().length).toBe(1)
+    const main = app.windows()[0]
     await main.getByTestId('quick-add-input').fill('几何回归任务')
     await main.getByTestId('quick-add-input').press('Enter')
     await main.getByTestId('due-date-input').fill('2026-11-22')
@@ -31,14 +30,6 @@ test('leaving rows and transformed select anchors preserve geometry and hit test
       const style = getComputedStyle(element)
       return Boolean(parent && element.getBoundingClientRect().width <= parent.width + 1 && style.pointerEvents === 'none')
     })).toBe(true)
-
-    const fallback = await widget.getByTestId('desktop-widget').evaluate(element => {
-      element.classList.add('mode-css')
-      const style = getComputedStyle(element)
-      return { color: style.color, background: style.backgroundImage }
-    })
-    expect(fallback.color).toBe('rgb(23, 35, 58)')
-    expect(fallback.background).toContain('0.62')
   } finally {
     await app.close()
     rmSync(directory, { recursive: true, force: true })

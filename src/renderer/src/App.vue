@@ -94,14 +94,26 @@ onUnmounted(() => {
 :root {
   font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
   color: #202124;
-  background: #f5f6f8;
+  background: #e8edf3;
   font-synthesis: none;
 }
 
 * { box-sizing: border-box; }
 body { margin: 0; }
 button, input, textarea, select { font: inherit; }
-.app-shell { position: relative; display: grid; grid-template-columns: 220px minmax(320px, 1fr) 320px; height: 100vh; padding-top: 40px; overflow: hidden; }
+.app-shell {
+  position: relative;
+  display: grid;
+  grid-template-columns: 220px minmax(320px, 1fr) 320px;
+  gap: 14px;
+  height: 100vh;
+  padding: 54px 14px 14px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 8% 0%, rgb(203 224 246 / 72%), transparent 36%),
+    radial-gradient(circle at 95% 10%, rgb(231 212 237 / 54%), transparent 38%),
+    linear-gradient(145deg, #e7edf4, #f3eff5 52%, #e3edf0);
+}
 .error-banner { position: absolute; z-index: 10; top: 48px; left: 50%; transform: translateX(-50%); padding: 10px 18px; border-radius: 8px; background: #fee2e2; color: #991b1b; }
 .settings-toggle { position: absolute; z-index: 12; top: 48px; right: 10px; width: 34px; height: 34px; border: 0; border-radius: 50%; background: transparent; color: #64748b; font-size: 18px; cursor: pointer; }
 .settings-toggle:hover { background: #e2e8f0; }

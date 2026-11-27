@@ -7,9 +7,8 @@ test('custom selects support pointer, keyboard, escape, and outside dismissal', 
   const directory = mkdtempSync(join(tmpdir(), 'windows-todo-custom-controls-'))
   const app = await electron.launch({ args: ['.'], env: { ...process.env, WINDOWS_TODO_TEST_DATA_DIR: directory } })
   try {
-    await expect.poll(() => app.windows().length).toBe(2)
-    const main = app.windows().find(page => !page.url().includes('widget.html'))!
-    const widget = app.windows().find(page => page.url().includes('widget.html'))!
+    await expect.poll(() => app.windows().length).toBe(1)
+    const main = app.windows()[0]
     await main.getByTestId('quick-add-input').fill('自定义控件任务')
     await main.getByTestId('quick-add-input').press('Enter')
 
@@ -37,13 +36,6 @@ test('custom selects support pointer, keyboard, escape, and outside dismissal', 
     await expect(main.getByRole('listbox')).toHaveCount(0)
 
     await expect(main.locator('select')).toHaveCount(0)
-    await expect(widget.locator('select')).toHaveCount(0)
-    await widget.getByTestId('widget-list-select').click()
-    await expect(widget.getByRole('option', { name: '我的待办', exact: true })).toBeVisible()
-    const popover = widget.getByRole('listbox')
-    expect(await popover.evaluate(element => getComputedStyle(element).getPropertyValue('-webkit-app-region'))).toBe('no-drag')
-    expect(await popover.evaluate(element => element.getBoundingClientRect().bottom <= innerHeight)).toBe(true)
-    await widget.getByTestId('widget-list-select').press('Escape')
 
     await main.getByTestId('settings-toggle').click()
     await main.getByRole('button', { name: '打开时间选择' }).click()

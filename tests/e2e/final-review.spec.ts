@@ -14,7 +14,7 @@ test.beforeEach(async () => {
     args: ['.'],
     env: { ...process.env, WINDOWS_TODO_TEST_DATA_DIR: dataDirectory },
   })
-  await expect.poll(() => app.windows().length).toBe(2)
+  await expect.poll(() => app.windows().length).toBe(1)
   page = app.windows().find(candidate => !candidate.url().includes('widget.html'))!
   await expect(page.getByTestId('quick-add-input')).toBeVisible()
   await page.getByTestId('quick-add-input').fill('重复任务')

@@ -23,6 +23,7 @@ interface WidgetWindow {
   show(): void
   showInactive(): void
   hide(): void
+  destroy(): void
   isVisible(): boolean
   on(event: string, handler: (event?: { preventDefault(): void }) => void): void
 }
@@ -66,6 +67,7 @@ export class WidgetWindowController {
       skipTaskbar: true,
       resizable: false,
       roundedCorners: presentation.roundedCorners,
+      backgroundColor: '#00000000',
     })
     if (presentation.backgroundMaterial === 'acrylic') {
       this.window.setBackgroundMaterial('acrylic')
@@ -144,7 +146,10 @@ export class WidgetWindowController {
   allowQuit(): void {
     this.quitting = true
     if (this.moveTimer) clearTimeout(this.moveTimer)
-    if (this.window) this.persistPosition()
+    if (this.window) {
+      this.persistPosition()
+      this.window.destroy()
+    }
   }
 
   clampToDisplays(): void {

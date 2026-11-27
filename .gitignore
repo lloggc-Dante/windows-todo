@@ -2,6 +2,8 @@ node_modules/
 dist/
 out/
 release/
+.cache/
+native-widget/bin/
 coverage/
 playwright-report/
 test-results/

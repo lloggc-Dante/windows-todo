@@ -1,11 +1,16 @@
 import type { WindowController } from './window-controller'
 
+export function appUserModelId(packaged: boolean): string {
+  return packaged ? 'com.windows-todo.app' : 'com.windows-todo.app.dev'
+}
+
 interface CloseEvent {
   preventDefault(): void
 }
 
 interface ClosableWindow {
   hide(): void
+  destroy(): void
 }
 
 interface IntegrationApp {
@@ -19,6 +24,7 @@ interface IntegrationApp {
 export class WindowsIntegration {
   private closeToTray = true
   private quitting = false
+  private beforeQuit: () => void = () => undefined
 
   constructor(
     private readonly app: IntegrationApp,
@@ -57,10 +63,15 @@ export class WindowsIntegration {
     this.quitting = true
   }
 
+  setBeforeQuit(handler: () => void): void {
+    this.beforeQuit = handler
+  }
+
   quit(): void {
     this.allowQuit()
-    this.app.quit()
-    setTimeout(() => this.app.exit(0), 1000).unref()
+    this.beforeQuit()
+    this.window.destroy()
+    this.app.exit(0)
   }
 }
 
